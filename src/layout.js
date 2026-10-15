@@ -1,129 +1,132 @@
 // ---------------------------------------------------------------------------
-// SITE PLAN — the single source of truth for where everything is.
-// Units: metres. +X = east, +Z = south, +Y = up (north is -Z).
-// Courtyard ground level y = 0. The sun is low in the WEST-SOUTH-WEST
-// (direction toward sun ~ (-0.94, 0.12, 0.34)), so west faces glow and long
-// shadows fall toward the east-north-east.
+// MASTER RAINFOREST SITE PLAN — The single source of truth for spatial layout.
+// Coordinates: Metres. +X = East, +Y = Up, +Z = South (North is -Z).
 //
-//              N (-Z)
-//   z=-48  ┌──────────── north corridor ─────────────┐
-//          │        ┌─────────────────┐               │
-//          │  ▲     │   MAIN HALL     │      bell     │
-//          │ pagoda │  (faces south)  │      tower    │
-//   z=-9   │(-32,-8)└──────┬┬┬────────┘               │
-//          │   plaza  (stone lanterns, gravel)  east  │
-//   z=6    │  ~~~~~~~~~~~~ pond ~~~~~~~~~~~~ pavilion │
-//          │  ~~~~ lotus ~~~ bridge ~~~ lotus ~(46,18)│
-//   z=34   │  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~        │
-//          │        garden                            │
-//   z=46   └────────────── gate (10,46) ──────────────┘
-//      x=-52                 x=10                   x=66
+// A monumental tropical rainforest valley flanked by steep jungle ridges,
+// backed by towering mountain ranges in the North, with a 210m primary waterfall
+// plunging into a mist-shrouded turquoise basin feeding a winding tropical river.
 // ---------------------------------------------------------------------------
 
 export const L = {
-  groundY: 0,
-
-  // Main hall (hondō): two-tier irimoya roof, karahafu porch over the stairs.
-  hall: {
-    center: [10, 0, -22],
-    facing: [0, 0, 1],            // faces south
-    platform: { w: 36, d: 27, h: 1.6 }, // granite podium (kidan); top at y = 1.6
-    columns: { w: 26, d: 17, bays: [7, 5], height: 6.4 }, // outer column grid on the podium
-    stairs: { width: 10, frontZ: -8.5 }, // main stair descends south to z ~ -8.5 + run
-    mokoshiEaveY: 8.4,            // lower skirt roof eave height
-    mainEaveY: 13.8,              // upper roof eave height
-    ridgeY: 21.5,                 // main ridge top
-    eaveOverhang: 3.6,
+  // World bounds
+  world: {
+    minX: -1000,
+    maxX: 1000,
+    minZ: -1600,
+    maxZ: 400,
   },
 
-  // Five-storey pagoda (gojū-no-tō)
-  pagoda: {
-    center: [-32, 0, -8],
-    platform: { w: 13, d: 13, h: 1.2 },
-    baseWidth: 7.6,               // column grid width of the 1st storey
-    storyHeight: 3.9,
-    shrink: 0.92,                 // each storey's width multiplier
-    eaveOverhang: 3.0,
-    stories: 5,
-    spireHeight: 10.5,            // sōrin (9 gold rings + suien + hōju)
-    totalHeight: 37,
+  // Valley floor parameters
+  valley: {
+    width: 850,             // Valley span east-to-west
+    floorMinY: 5.0,         // River outflow elevation at south
+    floorMaxY: 32.0,        // Upper valley elevation near waterfall base
+    wallSteepness: 0.045,   // Flanking valley wall rise rate
+    centerlineX: (z) => -15.0 * Math.sin(z * 0.006) + 10.0 * Math.cos(z * 0.012),
   },
 
-  // Pond: water surface and outline (clockwise polygon in x,z). Shore is stone.
-  pond: {
-    waterY: -0.55,
-    bottomY: -1.7,
-    outline: [
-      [-23, 7], [-14, 5.5], [-4, 6.5], [4, 7.5], [16, 7.5], [26, 6], [36, 7.5], [43, 11], [45, 18],
-      [43, 26], [36, 31], [26, 33.5], [14, 34], [2, 33], [-8, 34.5], [-18, 32], [-25, 26], [-27, 17], [-26, 11],
+  // Primary mountain range in the north / background
+  mountains: {
+    rangeMinZ: -1500,
+    rangeMaxZ: -310,
+    ridgeY: 480,            // Peak height in metres
+    silhouetteScale: 1800,  // East-west span
+    peaks: [
+      { pos: [-120, 520, -980], radius: 360, shape: 'sharp' },
+      { pos: [240, 470, -1120], radius: 420, shape: 'plateau' },
+      { pos: [-420, 440, -860], radius: 340, shape: 'eroded' },
+      { pos: [460, 410, -780], radius: 310, shape: 'sharp' },
+      { pos: [30, 390, -620], radius: 260, shape: 'ridge' },
     ],
-    island: [[-6, 18], [-1, 16.5], [3, 19], [1, 23], [-5, 23]], // small rocky island with a pine
   },
 
-  // Arched vermilion bridge (taiko-bashi) on the hall axis, crossing the pond south->north
-  bridge: {
-    south: [10, 0, 27],
-    north: [10, 0, 5],
-    width: 3.6,
-    rise: 2.6,          // deck crown above ground level
-    posts: 9,           // railing posts per side (gold giboshi finials)
+  // Primary Waterfall: 212m drop from the high mountain amphitheater
+  waterfall: {
+    center: [-50, 0, -290],
+    lip: {
+      center: [-50, 240, -305],
+      width: 36,            // Crest width at top
+      depth: 16,
+    },
+    base: {
+      center: [-50, 28, -270],
+      width: 68,            // Widened cascade base
+    },
+    dropHeight: 212,        // 240m -> 28m
+    flowSpeed: 20.0,        // m/s visual scroll speed
+    amphitheaterRadius: 88, // Cirque wall radius around the falls
   },
 
-  // Stone-paved processional path (gate -> bridge -> plaza -> hall stairs)
-  paths: [
-    { from: [10, 46], to: [10, 27], width: 4.0 },
-    { from: [10, 5], to: [10, -8.5], width: 5.0 },
-    { from: [10, -2], to: [-24, -6], width: 3.0 },   // branch to the pagoda
-    { from: [10, -2], to: [44, 10], width: 2.6 },    // branch to the pavilion
+  // Secondary waterfalls flowing into the valley
+  secondaryWaterfalls: [
+    {
+      name: 'East Cascade',
+      lip: [165, 135, -310],
+      base: [145, 38, -280],
+      width: 14,
+      drop: 97,
+    },
+    {
+      name: 'West Canyon Falls',
+      lip: [-210, 115, -260],
+      base: [-180, 34, -235],
+      width: 11,
+      drop: 81,
+    },
   ],
 
-  // Gravel plaza between hall and pond
-  plaza: { minX: -22, maxX: 44, minZ: -9, maxZ: 6 },
-
-  // Viewing pavilion on the east shore, open on the west side, veranda over water
-  pavilion: {
-    center: [47, 0, 18],
-    facing: [-1, 0, 0],   // opens toward the pond / pagoda / sunset
-    w: 10, d: 8, floorY: 1.1, eaveY: 4.6,
+  // Plunge Pool: Natural turquoise basin at the foot of the primary waterfall
+  plungePool: {
+    center: [-50, 28.0, -265],
+    radiusX: 68,
+    radiusZ: 62,
+    waterY: 28.0,
+    bottomY: 14.0,          // 14m deep plunge pool
+    shoreTransition: 16,    // Shore blending margin
   },
 
-  // Enclosing roofed corridor (kairō) and the south gate (chūmon)
-  corridor: {
-    rect: { minX: -52, maxX: 66, minZ: -48, maxZ: 46 },
-    width: 4.6, height: 3.4, bay: 3.6,
+  // Main Tropical River spline through the valley
+  river: {
+    waterYStart: 28.0,      // At plunge pool exit
+    waterYEnd: 5.0,         // At southern outflow
+    widthStart: 44,         // Width near plunge pool
+    widthEnd: 72,           // Widens downstream
+    depth: 4.8,
+    // Waypoints along the river spline [x, waterY, z]
+    waypoints: [
+      [-50, 28.0, -205],
+      [-32, 25.2, -140],
+      [ 12, 21.8,  -70],
+      [-14, 18.2,    5],
+      [ 36, 14.6,   85],
+      [  8, 11.0,  165],
+      [-26,  7.8,  250],
+      [  2,  5.0,  350],
+    ],
   },
-  gate: { center: [10, 0, 46], facing: [0, 0, 1], w: 12, d: 7, height: 11 },
-  bellTower: { center: [44, 0, -30], w: 6, d: 6 },
-  sideHalls: [
-    { center: [-40, 0, -36], w: 14, d: 9, facing: [1, 0, 0] },  // west sub-hall
-    { center: [52, 0, -6], w: 12, d: 8, facing: [-1, 0, 0] },   // east sub-hall
+
+  // Cliffs & Gorge walls
+  cliffs: {
+    amphCenter: [-50, 0, -222],
+    radius: 88,
+    gorgeWallHeight: 255,
+    amphitheaterCenter: [-50, 0, -320],
+    strataTilt: 0.12,       // Geological stratification tilt in radians
+  },
+
+  // Giant Rainforest Trees (Emergent trees framing the cinematic view)
+  framingTrees: [
+    { pos: [-62, 19, -15], height: 58, trunkRadius: 2.8, type: 'emergent' },
+    { pos: [55, 16, 45],  height: 52, trunkRadius: 2.4, type: 'emergent' },
+    { pos: [-38, 14, 75], height: 46, trunkRadius: 2.1, type: 'broadleaf' },
+    { pos: [78, 18, 110], height: 50, trunkRadius: 2.3, type: 'emergent' },
   ],
 
-  // Stone lanterns (kasuga-dōrō) — [x, z, height]
-  stoneLanterns: [
-    [6, -4, 2.6], [14, -4, 2.6], [6, 2, 2.6], [14, 2, 2.6],       // flanking the plaza axis
-    [5.5, 30, 2.4], [14.5, 30, 2.4],                               // south bridge head
-    [-25, -1, 2.3], [-25, -15, 2.3], [-39, -1, 2.3],               // around the pagoda
-    [39, 9, 2.0], [41, 27, 2.1], [-20, 30, 2.0], [28, 4.5, 1.9],   // pond shore
-    [-12, 4.2, 1.9], [24, 35.5, 2.0], [-4, 35, 1.8],
-  ],
-
-  // Hero trees — type: pine | maple | mapleRed | cherry ; [x, z, height]
-  trees: [
-    { type: 'pine', at: [-18, 3], h: 7.5 }, { type: 'pine', at: [30, 4], h: 6.5 },
-    { type: 'pine', at: [-2, 20], h: 5.5 }, // island
-    { type: 'pine', at: [40, 32], h: 7 }, { type: 'pine', at: [-23, 33], h: 6.5 },
-    { type: 'pine', at: [-44, 10], h: 11 }, { type: 'pine', at: [-46, -20], h: 12 },
-    { type: 'mapleRed', at: [24, -6], h: 6 }, { type: 'mapleRed', at: [-6, -6], h: 5.5 },
-    { type: 'mapleRed', at: [36, 34], h: 5 }, { type: 'mapleRed', at: [-14, 36], h: 5.5 },
-    { type: 'maple', at: [52, 26], h: 10 },   // big green maple overhanging the pavilion
-    { type: 'maple', at: [-20, -22], h: 9 }, { type: 'maple', at: [58, -38], h: 10 },
-    { type: 'cherry', at: [32, -16], h: 7 }, { type: 'cherry', at: [-10, -18], h: 7 },
-    { type: 'cherry', at: [-46, 30], h: 8 }, { type: 'cherry', at: [58, 38], h: 7.5 },
-  ],
-
-  // Distant landscape
-  mountains: { westRidgeDist: 900, ringRadius: 1400 },
+  // Ecological zones for specialized vegetation distribution
+  zones: {
+    sprayZone: { center: [-50, -275], radius: 140 }, // High moisture, ferns, moss, drenched foliage
+    riverCorridor: { distance: 55 },                 // Palms, tree ferns, elephant ears, river boulders
+    understoryDense: { minZ: -180, maxZ: 260 },      // Heavy ground cover, palms, broadleaf canopy
+    ridgeForest: { minHeight: 90 },                  // Dense canopy cards covering mountain flanks
+  },
 };
-
-export default L;

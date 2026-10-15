@@ -4,6 +4,7 @@ node_modules/
 # renders, stills, contact sheets, logs, headless Chrome profiles, GPU lock
 out/
 shots/
+scratch/
 *.log
 
 # third-party reference images (not redistributable)

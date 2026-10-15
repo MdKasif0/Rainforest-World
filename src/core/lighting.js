@@ -12,16 +12,16 @@ export function createSun(scene, { mapSize = 4096 } = {}) {
   sun.name = 'sun';
   sun.castShadow = true;
   sun.shadow.mapSize.set(mapSize, mapSize);
-  sun.shadow.bias = -0.00015;
-  sun.shadow.normalBias = 0.025;
-  sun.shadow.radius = 1.0;
+  sun.shadow.bias = -0.00035;
+  sun.shadow.normalBias = 0.08;
+  sun.shadow.radius = 1.2;
   const cam = sun.shadow.camera;
   cam.near = 1;
-  cam.far = 900;
+  cam.far = 1600;
   scene.add(sun);
   scene.add(sun.target);
   sun.userData.baseDir = sunDir.clone();
-  fitSunShadow(sun, new THREE.Vector3(0, 0, 0), 90);
+  fitSunShadow(sun, new THREE.Vector3(0, 0, 0), 120);
   return sun;
 }
 
@@ -36,12 +36,12 @@ export function fitSunShadow(sun, center, radius, jitter = null) {
     const up2 = new THREE.Vector3().crossVectors(right, d).normalize();
     d.addScaledVector(right, jitter.x).addScaledVector(up2, jitter.y).normalize();
   }
-  sun.position.copy(center).addScaledVector(d, 400);
+  sun.position.copy(center).addScaledVector(d, 700);
   sun.target.position.copy(center);
   sun.target.updateMatrixWorld();
   const cam = sun.shadow.camera;
   cam.left = -radius; cam.right = radius; cam.top = radius; cam.bottom = -radius;
-  cam.near = 400 - radius * 1.6; cam.far = 400 + radius * 1.6;
+  cam.near = 700 - radius * 1.8; cam.far = 700 + radius * 1.8;
   if (cam.near < 1) cam.near = 1;
   cam.updateProjectionMatrix();
   sun.shadow.needsUpdate = true;

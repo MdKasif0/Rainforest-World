@@ -325,6 +325,205 @@ PROC.wood = (base = 'vec3(0.24, 0.15, 0.09)', grainAxis = 'x') => {
   };
 };
 
+// --- Tropical Rainforest Procedural Materials -------------------------------
+
+// Stratified basalt/granite rock with slope-based moss, fissures and wetness sheen
+PROC.rainforestRock = (mossAmt = '0.75', wetness = '0.0') => ({
+  fragHead: /* glsl */ `float g_h; float g_moss; float g_wet;`,
+  fragColor: /* glsl */ `
+    {
+      vec3 wp = vWPos; vec3 wn = normalize(vWNrm);
+      float strata = sin(wp.y * 0.28 + n_fbm3(wp * 0.08, 3) * 3.5) * 0.5 + 0.5;
+      float big = n_fbm3(wp * 0.05, 4);
+      float fissure = smoothstep(0.46, 0.54, abs(n_snoise3(wp * 1.5) * 0.5));
+      float speck = n_snoise3(wp * 18.0);
+      
+      // Deep charcoal/basalt base with rich mineral tones
+      vec3 rockCol = vec3(0.12, 0.11, 0.10) * (0.8 + 0.4 * big) * (0.85 + 0.3 * strata);
+      rockCol = mix(rockCol, vec3(0.03, 0.03, 0.03), (1.0 - fissure) * 0.65);
+      
+      // Lichen & mineral oxidisation patches
+      float lich = smoothstep(0.62, 0.82, n_fbm3(wp * 0.6 + 4.1, 4) * 0.5 + 0.5);
+      rockCol = mix(rockCol, vec3(0.24, 0.22, 0.16), lich * 0.35);
+      
+      // Slope-based lush velvet moss on upward-facing surfaces (fades at high mountain elevations)
+      float up = smoothstep(0.15, 0.72, wn.y);
+      float mn = n_fbm3(wp * 0.45 + 7.2, 4) * 0.5 + 0.5;
+      float elevFade = smoothstep(220.0, 65.0, wp.y); // moss thrives in humid valley, fades on alpine peaks
+      g_moss = clamp(smoothstep(0.55 - 0.45 * up * ${mossAmt}, 0.85, mn + up * 0.3) * ${mossAmt} * elevFade, 0.0, 1.0);
+      vec3 mossCol = mix(vec3(0.04, 0.11, 0.02), vec3(0.08, 0.20, 0.04), n_snoise3(wp * 2.5) * 0.5 + 0.5);
+      
+      // Wetness darkening from waterfall spray or water contact
+      g_wet = clamp(${wetness}, 0.0, 1.0);
+      vec3 col = mix(rockCol, mossCol, g_moss);
+      col *= (1.0 - g_wet * 0.45);
+      
+      diffuseColor.rgb = col;
+      g_h = big * 0.4 + strata * 0.2 + fissure * 0.15 + g_moss * 0.45 + speck * 0.04;
+    }
+  `,
+  fragRough: /* glsl */ `
+    roughnessFactor = mix(mix(0.65, 0.92, g_moss), 0.10, g_wet);
+  `,
+  fragNormal: /* glsl */ `
+    normal = n_bumpView(-vViewPosition, normal, g_h, 0.035);
+  `,
+});
+
+// Vertical cliffs with water stains and striations
+PROC.cliffRock = () => ({
+  fragHead: /* glsl */ `float g_h;`,
+  fragColor: /* glsl */ `
+    {
+      vec3 wp = vWPos; vec3 wn = normalize(vWNrm);
+      float runStreak = n_fbm3(wp * vec3(1.8, 0.08, 1.8), 4);
+      float detail = n_snoise3(wp * 3.5);
+      float big = n_fbm3(wp * 0.04, 3);
+      float strata = sin(wp.y * 0.32 + n_fbm3(wp * 0.06, 3) * 2.5) * 0.5 + 0.5;
+      
+      // Deep dark volcanic basalt with warm mineral bands
+      vec3 col = vec3(0.11, 0.10, 0.09) * (0.8 + 0.35 * big) * (0.88 + 0.28 * strata);
+      col *= 1.0 - smoothstep(0.25, 0.85, runStreak) * 0.65; // dark vertical water seeps
+      
+      // Ledge vegetation and moss
+      float up = smoothstep(0.18, 0.72, wn.y);
+      float veg = smoothstep(0.55, 0.85, n_fbm3(wp * 0.35 + 2.0, 4) * 0.5 + 0.5) * up;
+      col = mix(col, vec3(0.06, 0.16, 0.03), veg * 0.85);
+      
+      diffuseColor.rgb = col;
+      g_h = runStreak * 0.4 + detail * 0.12 + big * 0.3 + strata * 0.2;
+    }
+  `,
+  fragRough: /* glsl */ `roughnessFactor = 0.68;`,
+  fragNormal: /* glsl */ `normal = n_bumpView(-vViewPosition, normal, g_h, 0.04);`,
+});
+
+// Rainforest hardwood tree bark with vertical furrowing and epiphyte moss
+PROC.rainforestBark = () => ({
+  fragHead: /* glsl */ `float g_h; float g_moss;`,
+  fragColor: /* glsl */ `
+    {
+      vec3 wp = vWPos; vec3 wn = normalize(vWNrm);
+      // Strong vertical grain striations
+      float ridges = n_fbm3(wp * vec3(12.0, 0.6, 12.0), 4);
+      float largeGirth = n_fbm3(wp * 0.25, 3);
+      vec3 col = vec3(0.18, 0.13, 0.09) * (0.8 + 0.4 * ridges + 0.15 * largeGirth);
+      
+      // Grey-green lichen patches
+      float lichen = smoothstep(0.62, 0.85, n_fbm3(wp * 1.2 + 8.0, 3) * 0.5 + 0.5);
+      col = mix(col, vec3(0.26, 0.28, 0.22), lichen * 0.45);
+      
+      // Base moss on roots and crotches
+      float up = smoothstep(0.2, 0.85, wn.y);
+      g_moss = smoothstep(0.5, 0.8, n_fbm3(wp * 0.8 + 3.0, 4) * 0.5 + 0.5) * up * 0.8;
+      col = mix(col, vec3(0.05, 0.12, 0.02), g_moss);
+      
+      diffuseColor.rgb *= col;
+      g_h = ridges * 0.5 + g_moss * 0.3;
+    }
+  `,
+  fragRough: /* glsl */ `roughnessFactor = mix(0.88, 0.96, g_moss);`,
+  fragNormal: /* glsl */ `normal = n_bumpView(-vViewPosition, normal, g_h, 0.008);`,
+});
+
+// Translucent waxy tropical leaf with subsurface transmission
+PROC.tropicalLeaf = (subsurface = '0.65') => ({
+  fragHead: /* glsl */ `float g_vein;`,
+  fragColor: /* glsl */ `
+    {
+      vec3 wp = vWPos;
+      float fine = n_snoise3(wp * 40.0) * 0.08;
+      float big = n_fbm3(wp * 2.0, 2) * 0.15;
+      vec3 col = vec3(0.85, 0.95, 0.8) * (0.92 + fine + big);
+      diffuseColor.rgb *= col;
+      g_vein = fine;
+    }
+  `,
+  fragLight: /* glsl */ `
+    {
+      float backLight = max(0.0, dot(-geometryNormal, directLight.direction));
+      reflectedLight.directDiffuse += directLight.color * diffuseColor.rgb * backLight * ${subsurface};
+    }
+  `,
+  fragRough: /* glsl */ `roughnessFactor = 0.32;`,
+  fragNormal: /* glsl */ `normal = n_bumpView(-vViewPosition, normal, g_vein, 0.003);`,
+});
+
+// Waterfall animated turbulent foam surface
+PROC.waterfallFoam = () => ({
+  fragHead: /* glsl */ `
+    float g_foam;
+  `,
+  fragColor: /* glsl */ `
+    {
+      vec3 wp = vWPos;
+      float t = uTime * 3.5;
+      // Multi-layer downward cascading noise with varying velocities
+      vec2 uv1 = vec2(wp.x * 0.14, wp.y * 0.28 - t);
+      vec2 uv2 = vec2(wp.x * 0.32 + 3.1, wp.y * 0.65 - t * 1.45);
+      vec2 uv3 = vec2(wp.x * 0.08 - 1.7, wp.y * 0.15 - t * 0.75);
+      float n1 = n_fbm3(vec3(uv1.x, uv1.y, wp.z * 0.2), 4);
+      float n2 = n_snoise3(vec3(uv2.x, uv2.y, wp.z * 0.35));
+      float n3 = n_snoise3(vec3(uv3.x, uv3.y, wp.z * 0.1));
+      float foam = smoothstep(0.20, 0.70, n1 * 0.55 + n2 * 0.3 + n3 * 0.25 + 0.18);
+      g_foam = foam;
+      
+      // Radiant aerated whitewater with emerald-turquoise glacial tint
+      vec3 deepWater = vec3(0.08, 0.35, 0.38);
+      vec3 whitewater = vec3(0.97, 0.99, 1.0);
+      diffuseColor.rgb = mix(deepWater, whitewater, foam);
+      // Aeration light bounce
+      diffuseColor.rgb += vec3(0.35, 0.36, 0.38) * foam;
+    }
+  `,
+  fragRough: /* glsl */ `roughnessFactor = mix(0.08, 0.55, g_foam);`,
+  fragNormal: /* glsl */ `normal = n_bumpView(-vViewPosition, normal, g_foam, 0.045);`,
+});
+
+// River flowing surface with gentle caustics, ripples, and whitewater rapids foam
+PROC.riverWaterSurface = () => ({
+  fragHead: /* glsl */ `float g_wave; float g_rf;`,
+  fragColor: /* glsl */ `
+    {
+      vec3 wp = vWPos;
+      float t = uTime * 0.95;
+      float w1 = sin(wp.x * 0.8 + wp.z * 0.5 - t * 2.2);
+      float w2 = cos(wp.x * 0.4 - wp.z * 1.1 - t * 1.6);
+      float rip = n_snoise3(vec3(wp.x * 0.9, t * 1.4, wp.z * 0.9)) * 0.5 + 0.5;
+      g_wave = (w1 + w2) * 0.25 + rip * 0.5;
+      
+      // Whitewater rapids foam riffles along fast-moving channel
+      float foamNoise = n_fbm3(vec3(wp.x * 0.35, wp.y * 0.1, wp.z * 0.35 - t * 1.8), 3);
+      float rf = smoothstep(0.48, 0.78, foamNoise);
+      g_rf = rf;
+      
+      // Clear tropical river water: crystalline turquoise-aquamarine with sparkling whitewater foam
+      vec3 deepWater = vec3(0.04, 0.36, 0.40);
+      vec3 shallowWater = vec3(0.10, 0.50, 0.48);
+      vec3 waterBase = mix(deepWater, shallowWater, sin(wp.x * 0.12 + wp.z * 0.12) * 0.5 + 0.5);
+      vec3 foamCol = vec3(0.96, 0.98, 1.0);
+      diffuseColor.rgb = mix(waterBase, foamCol, rf * 0.85);
+      diffuseColor.a = mix(0.82, 0.98, rf);
+    }
+  `,
+  fragRough: /* glsl */ `roughnessFactor = mix(0.04, 0.55, g_rf);`,
+  fragNormal: /* glsl */ `normal = n_bumpView(-vViewPosition, normal, g_wave + g_rf * 0.8, 0.045);`,
+});
+
+// Submerged gravel, riverbed silt and wet stones
+PROC.wetRiverbed = () => ({
+  fragColor: /* glsl */ `
+    {
+      vec3 wp = vWPos;
+      float pebbles = n_snoise3(wp * 18.0) * 0.5 + 0.5;
+      float sand = n_fbm3(wp * 2.5, 3);
+      vec3 col = vec3(0.12, 0.14, 0.11) * (0.8 + 0.35 * sand + 0.25 * pebbles);
+      diffuseColor.rgb = col;
+    }
+  `,
+  fragRough: /* glsl */ `roughnessFactor = 0.5;`,
+});
+
 // ---------------------------------------------------------------------------
 // The shared material library. Use these instances (they are shared so the
 // renderer compiles each program once). Create variants with std()/phys()+PROC.
@@ -333,6 +532,8 @@ let _lib = null;
 export function materials() {
   if (_lib) return _lib;
   const M = {};
+  
+  // Existing materials preserved
   M.lacquerRed = phys({ color: 0xffffff, roughness: 0.5, metalness: 0, clearcoat: 0.25, clearcoatRoughness: 0.4 }, PROC.lacquer());
   M.lacquerRedDark = phys({ color: 0xffffff, roughness: 0.55, metalness: 0, clearcoat: 0.15, clearcoatRoughness: 0.5 }, PROC.lacquer('vec3(0.30, 0.040, 0.020)'));
   M.lacquerOrange = phys({ color: 0xffffff, roughness: 0.5, metalness: 0, clearcoat: 0.25, clearcoatRoughness: 0.4 }, PROC.lacquer('vec3(0.62, 0.13, 0.035)'));
@@ -356,6 +557,37 @@ export function materials() {
   M.lanternGlow = glow([1.0, 0.58, 0.24], 9);
   M.lanternGlowSoft = glow([1.0, 0.62, 0.30], 4);
   M.flame = glow([1.0, 0.62, 0.25], 40);
+
+  // New Rainforest Master Materials
+  M.rock = std({ color: 0xffffff, roughness: 0.85, metalness: 0.04 }, PROC.rainforestRock('0.5', '0.0'));
+  M.rockMossy = std({ color: 0xffffff, roughness: 0.9, metalness: 0.02 }, PROC.rainforestRock('1.0', '0.0'));
+  M.rockWet = std({ color: 0xffffff, roughness: 0.14, metalness: 0.08 }, PROC.rainforestRock('0.3', '1.0'));
+  M.cliff = std({ color: 0xffffff, roughness: 0.85, metalness: 0.02 }, PROC.cliffRock());
+  M.rainforestBark = std({ color: 0xffffff, roughness: 0.88, metalness: 0 }, PROC.rainforestBark());
+  M.tropicalLeaf = phys({
+    color: 0xffffff, roughness: 0.28, metalness: 0, clearcoat: 0.45, clearcoatRoughness: 0.3,
+    side: THREE.DoubleSide,
+  }, PROC.tropicalLeaf('0.7'));
+  M.palmFrond = phys({
+    color: 0xffffff, roughness: 0.32, metalness: 0, clearcoat: 0.35, clearcoatRoughness: 0.35,
+    side: THREE.DoubleSide,
+  }, PROC.tropicalLeaf('0.55'));
+  M.fern = phys({
+    color: 0xffffff, roughness: 0.35, metalness: 0, clearcoat: 0.2, clearcoatRoughness: 0.4,
+    side: THREE.DoubleSide,
+  }, PROC.tropicalLeaf('0.85'));
+  M.waterfall = std({
+    color: 0xffffff, roughness: 0.22, metalness: 0.05,
+    side: THREE.DoubleSide,
+  }, PROC.waterfallFoam());
+  M.riverWater = phys({
+    color: 0xffffff, roughness: 0.05, metalness: 0.05, clearcoat: 1.0, clearcoatRoughness: 0.08,
+    transparent: true, opacity: 0.88,
+    side: THREE.DoubleSide,
+  }, PROC.riverWaterSurface());
+  M.riverbed = std({ color: 0xffffff, roughness: 0.65, metalness: 0 }, PROC.wetRiverbed());
+
   _lib = M;
   return M;
 }
+

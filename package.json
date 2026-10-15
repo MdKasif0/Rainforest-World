@@ -1,28 +1,28 @@
 {
-  "name": "golden-temple",
+  "name": "rainforest-world",
   "version": "1.0.0",
-  "description": "A photoreal golden-hour Japanese temple complex built entirely in code with Three.js (no models, textures or HDRIs), rendered offline into a 70-second 1080p60 film.",
+  "description": "A photorealistic tropical rainforest world built entirely in code with Three.js (no models, textures or HDRIs).",
   "license": "MIT",
-  "author": "Leon Lin",
+  "author": "Md Kasif Uddin",
   "private": true,
   "type": "module",
-  "homepage": "https://github.com/Leonxlnx/golden-temple#readme",
+  "homepage": "https://github.com/MdKasif0/Rainforest-World#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Leonxlnx/golden-temple.git"
+    "url": "git+https://github.com/MdKasif0/Rainforest-World.git"
   },
   "bugs": {
-    "url": "https://github.com/Leonxlnx/golden-temple/issues"
+    "url": "https://github.com/MdKasif0/Rainforest-World/issues"
   },
   "keywords": [
     "threejs",
     "webgl",
     "procedural",
     "procedural-generation",
-    "offline-rendering",
-    "cinematic",
-    "japanese-architecture",
-    "golden-hour"
+    "rainforest",
+    "waterfall",
+    "nature",
+    "cinematic"
   ],
   "engines": {
     "node": ">=22"

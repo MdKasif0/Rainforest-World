@@ -29,7 +29,7 @@ const MODE = Q.get('mode') || (Q.has('shot') || Q.has('cam') ? 'still' : 'dev');
 const QUALITY = Q.get('q') || (MODE === 'dev' ? 'preview' : 'final');
 const SPP = +Q.get('spp') || (MODE === 'render' ? 8 : MODE === 'still' ? 4 : 1);
 
-export const ALL_MODULES = ['terrain', 'pond', 'hall', 'interior', 'pagoda', 'bridge', 'buildings', 'props', 'vegetation'];
+export const ALL_MODULES = ['terrain', 'mountains', 'cliffs', 'river', 'waterfalls', 'rocks', 'vegetation', 'atmosphere'];
 
 const status = (s) => { const el = document.getElementById('status'); if (el) el.textContent = s; };
 
@@ -299,9 +299,9 @@ async function main() {
   scene.environmentIntensity = ENV.envIntensity;
   if (QUALITY !== 'preview' && !Q.has('noenvcap') && names.length > 3) {
     const prevEnv = scene.environment;
-    fitSunShadow(sun, new THREE.Vector3(6, 0, 0), 90);
+    fitSunShadow(sun, new THREE.Vector3(-20, 60, -100), 250);
     const tc1 = performance.now();
-    scene.environment = captureEnvironment(renderer, scene, new THREE.Vector3(10, 4, 4), { size: 256 });
+    scene.environment = captureEnvironment(renderer, scene, new THREE.Vector3(0, 22, 0), { size: 256 });
     renderer.getContext().finish();
     console.log('[info] scene env capture ms', Math.round(performance.now() - tc1));
     prevEnv.dispose();
