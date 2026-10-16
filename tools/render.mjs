@@ -17,12 +17,25 @@ import { findChrome, gpuArgs, assertDevServer } from './lib/chrome.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const VITE_PORT = process.env.VITE_PORT || 5173;
-const opt = { w: 1920, h: 1080, fps: 60, spp: 8, from: 0, to: 0, out: 'out/temple.mp4', crf: 14, preset: 'slow', port: 5190, extra: '' };
+const opt = {
+  w: 1920, h: 1080, fps: 60, spp: 8, from: 0, to: 0,
+  out: 'out/rainforest-film.mp4', crf: 14, preset: 'slow',
+  port: 5190, cool: 30, shot: undefined, extra: '',
+};
 const a = process.argv.slice(2);
 for (let i = 0; i < a.length; i++) {
   const k = a[i].replace(/^--/, '');
-  if (k in opt) opt[k] = typeof opt[k] === 'number' ? +a[++i] : a[++i];
+  if (k === 'all') { opt.from = 0; opt.to = 4200; }
+  else if (k in opt) opt[k] = typeof opt[k] === 'number' ? +a[++i] : a[++i];
 }
+if (opt.shot !== undefined) {
+  const s = +opt.shot;
+  opt.from = s * 420;
+  opt.to = (s + 1) * 420;
+  if (opt.out === 'out/rainforest-film.mp4') opt.out = `out/shot${s}.mp4`;
+}
+if (!opt.to) opt.to = Math.round(70 * opt.fps);
+
 const outPath = path.resolve(ROOT, opt.out);
 let CHROME;
 try { CHROME = findChrome(); await assertDevServer(VITE_PORT); }
@@ -49,7 +62,7 @@ const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', '*');
   if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
-  const url = new URL(req.url, 'http://x');
+  const url = new URL(req.url, 'http://127.0.0.1');
   const chunks = [];
   req.on('data', (c) => chunks.push(c));
   req.on('end', () => {
@@ -72,7 +85,7 @@ const server = http.createServer((req, res) => {
     } else { res.writeHead(404); res.end(); }
   });
 });
-server.listen(opt.port);
+server.listen(opt.port, '127.0.0.1');
 
 // share the GPU lock with tools/snap.mjs (kept fresh while frames arrive, so snap never treats it as stale)
 const LOCK = path.join(ROOT, 'out', '.gpu.lock');
@@ -97,14 +110,18 @@ const browser = await puppeteer.launch({
   userDataDir: path.join(ROOT, 'out', '.chrome-profile'),
 });
 const page = await browser.newPage();
-page.on('console', (m) => { const t = m.text(); if (m.type() === 'error' || /\[(world|info|gpu|fatal)\]/.test(t)) console.log('[page]', t.slice(0, 500)); });
+let pageGpu = 'unknown';
+page.on('console', (m) => {
+  const t = m.text();
+  if (t.includes('[gpu]')) pageGpu = t.replace('[gpu]', '').trim();
+  if (m.type() === 'error' || /\[(world|info|gpu|fatal)\]/.test(t)) console.log('[page]', t.slice(0, 500));
+});
 page.on('pageerror', (e) => console.log('[page:error]', e.message));
 const fps = opt.fps;
-if (!opt.to) opt.to = Math.round(70 * fps);
-const q = `mode=render&w=${opt.w}&h=${opt.h}&fps=${fps}&spp=${opt.spp}&from=${opt.from}&to=${opt.to}&port=${opt.port}${opt.extra ? '&' + opt.extra : ''}`;
+const q = `mode=render&w=${opt.w}&h=${opt.h}&fps=${fps}&spp=${opt.spp}&from=${opt.from}&to=${opt.to}&port=${opt.port}&cool=${opt.cool}${opt.extra ? '&' + opt.extra : ''}`;
 expected = opt.from;
 console.log('[render] loading', q);
-await page.goto(`http://localhost:${VITE_PORT}/?${q}`, { waitUntil: 'load', timeout: 0 });
+await page.goto(`http://127.0.0.1:${VITE_PORT}/?${q}`, { waitUntil: 'load', timeout: 0 });
 while (!done) {
   await new Promise((r) => setTimeout(r, 1000));
   const err = await page.evaluate(() => window.__ERROR || null).catch(() => null);
@@ -114,4 +131,32 @@ await browser.close();
 ff.stdin.end();
 await new Promise((r) => ff.on('close', r));
 server.close();
-console.log(`[render] wrote ${opt.out}: ${frames} frames in ${((Date.now() - t0) / 60000).toFixed(1)} min`);
+const totalSeconds = (Date.now() - t0) / 1000;
+const stat = fs.existsSync(outPath) ? fs.statSync(outPath) : null;
+console.log(`[render] wrote ${opt.out}: ${frames} frames in ${(totalSeconds / 60).toFixed(1)} min (${(frames / Math.max(totalSeconds, 0.001)).toFixed(2)} fps, ${(totalSeconds / Math.max(frames, 1)).toFixed(2)} s/frame)`);
+
+// Write detailed render telemetry report
+const report = {
+  timestamp: new Date().toISOString(),
+  targetFile: opt.out,
+  resolution: { width: opt.w, height: opt.h },
+  fps: opt.fps,
+  spp: opt.spp,
+  framesRendered: frames,
+  fromFrame: opt.from,
+  toFrame: opt.to,
+  durationSeconds: +(frames / opt.fps).toFixed(2),
+  totalRenderTimeMinutes: +(totalSeconds / 60).toFixed(2),
+  averageSecondsPerFrame: +(totalSeconds / Math.max(frames, 1)).toFixed(3),
+  averageFps: +(frames / Math.max(totalSeconds, 0.001)).toFixed(2),
+  fileSizeBytes: stat ? stat.size : 0,
+  gpu: pageGpu,
+  codec: 'libx264',
+  crf: opt.crf,
+  preset: opt.preset,
+  colorSpace: 'bt709',
+  pixelFormat: 'yuv420p',
+};
+const reportPath = path.resolve(ROOT, 'out', 'render-report.json');
+fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
+console.log(`[render] saved report to ${path.relative(ROOT, reportPath)}`);

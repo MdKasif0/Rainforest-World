@@ -64,7 +64,7 @@ export const ENV_SYSTEM = {
     // Each bird has a distinct flight corridor across the monumental valley
     const speed = 14.0 + (index % 3) * 2.5;
     const loopDuration = 32.0 + (index % 4) * 8.0;
-    const progress = ((T + seed) % loopDuration) / loopDuration;
+    const progress = ((((T + seed) % loopDuration) + loopDuration) % loopDuration) / loopDuration;
     const u = progress * Math.PI * 2;
 
     let x, y, z;
@@ -87,7 +87,7 @@ export const ENV_SYSTEM = {
 
     // Velocity vector for heading & banking
     const dt = 0.05;
-    const uNext = ((T + dt + seed) % loopDuration) / loopDuration * Math.PI * 2;
+    const uNext = ((((T + dt + seed) % loopDuration) + loopDuration) % loopDuration) / loopDuration * Math.PI * 2;
     let nx, ny, nz;
     if (index % 3 === 0) {
       nx = -30.0 + Math.sin(uNext) * 95.0 + Math.sin(uNext * 2.0) * 25.0;
@@ -148,14 +148,15 @@ export const ENV_SYSTEM = {
     const riverLen = RIVER_WAYPOINTS.length;
     // Downstream drift speed
     const driftSpeed = 0.022; // Progress through spline per second
-    const rawProgress = (index / totalLeaves + T * driftSpeed + seed * 0.01) % 1.0;
-    const splineT = rawProgress * (riverLen - 1);
-    const i = Math.floor(splineT);
+    let rawProgress = (index / totalLeaves + T * driftSpeed + seed * 0.01) % 1.0;
+    if (rawProgress < 0) rawProgress += 1.0;
+    const splineT = Math.min(Math.max(rawProgress, 0), 0.99999) * (riverLen - 1);
+    const i = Math.min(Math.max(Math.floor(splineT), 0), riverLen - 2);
     const frac = splineT - i;
-    const nextI = Math.min(i + 1, riverLen - 1);
+    const nextI = i + 1;
 
-    const p1 = RIVER_WAYPOINTS[i];
-    const p2 = RIVER_WAYPOINTS[nextI];
+    const p1 = RIVER_WAYPOINTS[i] || RIVER_WAYPOINTS[0];
+    const p2 = RIVER_WAYPOINTS[nextI] || RIVER_WAYPOINTS[riverLen - 1];
 
     // Centerline position
     const cx = p1[0] + (p2[0] - p1[0]) * frac;
@@ -188,7 +189,7 @@ export const ENV_SYSTEM = {
   evalPlungeSpray(index, T, totalDroplets = 60) {
     const seed = index * 31.77;
     const cycle = 1.6 + (index % 4) * 0.35;
-    const tCycle = (T + seed) % cycle;
+    const tCycle = ((((T + seed) % cycle) + cycle) % cycle);
     const tau = tCycle / cycle; // [0, 1]
 
     const poolCenter = [-50, 24.8, -265];
