@@ -83,11 +83,11 @@ export async function build(ctx) {
     return geo;
   }
 
-  // Patched Foliage Material with wind sway and natural subsurface light transmission
+  // Patched Foliage Material with wind sway and physically based subsurface light transmission
   const foliageMat = mat.std({
     map: atlas,
     alphaTest: 0.38,
-    roughness: 0.35,
+    roughness: 0.28,
     metalness: 0.0,
     side: THREE.DoubleSide,
     transparent: false,
@@ -96,9 +96,28 @@ export async function build(ctx) {
       float flex = clamp((wPos4.y - 8.0) / 45.0, 0.0, 1.0);
       wPos4.xyz += windOffset(wPos4.xyz, flex);
     `,
+    fragColor: /* glsl */ `
+      {
+        // Height and canopy exposure chlorophyll gradation
+        float exposure = smoothstep(12.0, 48.0, vWPos.y);
+        diffuseColor.rgb *= mix(vec3(0.92, 0.96, 0.88), vec3(1.08, 1.14, 0.94), exposure);
+      }
+    `,
     fragLight: /* glsl */ `
-      float backDot = max(0.0, dot(-geometryNormal, directLight.direction));
-      reflectedLight.directDiffuse += directLight.color * diffuseColor.rgb * backDot * 0.95;
+      {
+        // Physically motivated two-sided subsurface transillumination
+        float backDot = max(0.0, dot(-geometryNormal, directLight.direction));
+        vec3 transCol = diffuseColor.rgb * vec3(1.35, 1.50, 0.75);
+        reflectedLight.directDiffuse += directLight.color * transCol * backDot * 0.92;
+      }
+    `,
+    fragRough: /* glsl */ `
+      // Waxy cuticle roughness variation
+      roughnessFactor = mix(0.24, 0.40, n_snoise3(vWPos * 10.0) * 0.5 + 0.5);
+    `,
+    fragNormal: /* glsl */ `
+      // Delicate vein normal perturbation
+      normal = n_bumpView(-vViewPosition, normal, n_snoise3(vWPos * 28.0), 0.005);
     `,
   });
 
@@ -201,10 +220,10 @@ export async function build(ctx) {
     }
   }
 
-  group.add(geom.instanced(emergentTrunkGeo, M.rainforestBark, emergentTrunkMatrices, { castShadow: true, receiveShadow: true }));
-  group.add(geom.instanced(buttressFinGeo, M.rainforestBark, buttressMatrices, { castShadow: true, receiveShadow: true }));
-  group.add(geom.instanced(scaffoldGeo, M.rainforestBark, scaffoldMatrices, { castShadow: true, receiveShadow: true }));
-  group.add(geom.instanced(lianaGeo, M.rainforestBark, lianaMatrices, { castShadow: true, receiveShadow: false }));
+  group.add(geom.instanced(emergentTrunkGeo, M.barkWet, emergentTrunkMatrices, { castShadow: true, receiveShadow: true }));
+  group.add(geom.instanced(buttressFinGeo, M.barkRoot, buttressMatrices, { castShadow: true, receiveShadow: true }));
+  group.add(geom.instanced(scaffoldGeo, M.barkDry, scaffoldMatrices, { castShadow: true, receiveShadow: true }));
+  group.add(geom.instanced(lianaGeo, M.barkMossy, lianaMatrices, { castShadow: true, receiveShadow: false }));
   group.add(geom.instanced(broadleafVol, foliageMat, emergentFoliageMatrices, { castShadow: true, receiveShadow: true }));
 
   // Camera clearance corridors to keep cinematic shot sightlines clean
@@ -255,7 +274,7 @@ export async function build(ctx) {
     }
   }
 
-  group.add(geom.instanced(midTrunkGeo, M.rainforestBark, midTrunkMatrices, { castShadow: true, receiveShadow: true }));
+  group.add(geom.instanced(midTrunkGeo, M.barkDry, midTrunkMatrices, { castShadow: true, receiveShadow: true }));
   group.add(geom.instanced(broadleafVol, foliageMat, midFoliageMatrices, { castShadow: true, receiveShadow: true }));
 
   // 3. TROPICAL FEATHER PALMS (Riverbanks and waterfall viewpoints)
