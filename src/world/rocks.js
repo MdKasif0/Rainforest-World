@@ -100,7 +100,7 @@ export async function build(ctx) {
     logMatrices.push(geom.mat4([x, y + s * 0.6, z], rot, s));
   }
 
-  const logsMesh = geom.instanced(logGeo, M.rainforestBark, logMatrices, { castShadow: true, receiveShadow: true });
+  const logsMesh = geom.instanced(logGeo, M.barkMossy, logMatrices, { castShadow: true, receiveShadow: true });
   group.add(logsMesh);
 
   return { object: group };
