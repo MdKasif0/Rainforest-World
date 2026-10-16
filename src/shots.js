@@ -24,7 +24,7 @@ export const SHOTS = [
       { pos: [50, 105, 150], look: [-48, 90, -285], focal: 28, focus: 350, fstop: 8 },
     ],
     shadow: { center: [-30, 90, -120], radius: 280 },
-    post: { exposure: 1.05, fog: 0.75 },
+    post: { exposure: 1.05, fog: 0.78, bloom: 0.06, contrast: 1.05, saturation: 1.04 },
   },
   {
     name: 'Primary Waterfall & Plunge Pool — Low dramatic view of the 212m cascade crashing through rising mist',
@@ -34,7 +34,7 @@ export const SHOTS = [
       { pos: [-50, 31.5, -200], look: [-50, 125, -290], focal: 22, focus: 85,  fstop: 5.6 },
     ],
     shadow: { center: [-50, 110, -270], radius: 140 },
-    post: { exposure: 1.08, fog: 0.8 },
+    post: { exposure: 1.06, fog: 0.82, bloom: 0.08, vol: 0.20, volDensity: 0.006, volHeight: 45, contrast: 1.06 },
   },
   {
     name: 'Mountain Ridges & Mist Skyline — Sweeping across the knife-edge peaks and towering escarpment',
@@ -44,7 +44,7 @@ export const SHOTS = [
       { pos: [-30, 325, 40], look: [-40, 490, -840], focal: 24, focus: 800, fstop: 8.0 },
     ],
     shadow: { center: [0, 380, -600], radius: 450 },
-    post: { exposure: 1.05, fog: 0.8 },
+    post: { exposure: 1.04, fog: 0.82, bloom: 0.06, contrast: 1.08, saturation: 1.02 },
   },
   {
     name: 'Dense Foreground Jungle & Canopy Framing — Pushing past giant buttress roots and broadleaf fronds to the falls',
@@ -54,7 +54,7 @@ export const SHOTS = [
       { pos: [-42, 21, -18], look: [-48, 70, -280], focal: 28, focus: 260, fstop: 5.6 },
     ],
     shadow: { center: [-50, 40, -120], radius: 180 },
-    post: { exposure: 1.05, dof: true, focus: 16, fstop: 4.0 },
+    post: { exposure: 1.05, dof: true, focus: 14, fstop: 3.5, bloom: 0.06, aoStrength: 0.85, contrast: 1.06 },
   },
   {
     name: 'River & Plunge Pool Outflow — Gliding along the turquoise river towards the plunge pool and waterfall',
@@ -64,7 +64,7 @@ export const SHOTS = [
       { pos: [-10, 25.2, -115], look: [-35, 27.0, -185], focal: 28, focus: 75, fstop: 5.6 },
     ],
     shadow: { center: [-25, 28, -140], radius: 140 },
-    post: { exposure: 1.06, fog: 0.75 },
+    post: { exposure: 1.06, fog: 0.76, bloom: 0.07, contrast: 1.05, saturation: 1.05 },
   },
 ];
 

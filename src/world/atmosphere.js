@@ -9,7 +9,7 @@ export async function build(ctx) {
   const group = new THREE.Group();
   group.name = 'atmosphere';
 
-  // Soft Mist / Fog Material with procedural scrolling FBM and depth fade
+  // Soft Mist / Fog Material with procedural scrolling FBM, Mie forward-scattering glow and depth fade
   const mistMat = mat.std({
     color: new THREE.Color().setRGB(0.92, 0.96, 0.99),
     roughness: 0.95,
@@ -23,11 +23,23 @@ export async function build(ctx) {
     fragColor: /* glsl */ `
       {
         vec3 wp = vWPos;
-        float t = uTime * 0.4;
-        float b1 = n_fbm3(vec3(wp.x * 0.025, wp.y * 0.015 - t * 0.5, wp.z * 0.025), 3);
-        float b2 = n_snoise3(vec3(wp.x * 0.06, wp.y * 0.03 - t * 0.7, wp.z * 0.06));
-        float density = smoothstep(0.25, 0.78, b1 * 0.7 + b2 * 0.3);
-        diffuseColor.a *= density * 0.45;
+        float t = uTime * 0.35;
+        // Billowing convection currents rising vertically and drifting with wind
+        vec2 drift = uWindDir * (t * 0.8);
+        vec3 flowPos = vec3(wp.x - drift.x, wp.y - t * 1.8, wp.z - drift.y);
+        float b1 = n_fbm3(flowPos * vec3(0.022, 0.015, 0.022), 3);
+        float b2 = n_snoise3(flowPos * vec3(0.055, 0.035, 0.055));
+        float density = smoothstep(0.22, 0.75, b1 * 0.65 + b2 * 0.35);
+        
+        // Forward Mie scattering: mist radiates golden warmth when looking toward the sun
+        vec3 viewDir = normalize(wp - cameraPosition);
+        float cosTheta = dot(viewDir, uSunDir);
+        float g = 0.72;
+        float mie = (1.0 - g * g) / pow(1.0 + g * g - 2.0 * g * cosTheta, 1.5) / 12.566;
+        vec3 mistSunGlow = uSunColor * min(mie * 4.0, 1.6) * 0.35;
+        
+        diffuseColor.rgb += mistSunGlow;
+        diffuseColor.a *= density * 0.52;
       }
     `,
   });
