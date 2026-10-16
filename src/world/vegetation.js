@@ -312,7 +312,7 @@ export async function build(ctx) {
     }
   }
 
-  group.add(geom.instanced(palmTrunkGeo, M.rainforestBark, palmTrunkMatrices, { castShadow: true, receiveShadow: true }));
+  group.add(geom.instanced(palmTrunkGeo, M.barkWet, palmTrunkMatrices, { castShadow: true, receiveShadow: true }));
   group.add(geom.instanced(palmQuad, foliageMat, palmFrondMatrices, { castShadow: true, receiveShadow: true }));
 
   // 4. TREE FERNS & GIANT UNDERSTORY FERNS
@@ -353,7 +353,7 @@ export async function build(ctx) {
     }
   }
 
-  group.add(geom.instanced(fernTrunkGeo, M.rainforestBark, fernTrunkMatrices, { castShadow: true, receiveShadow: true }));
+  group.add(geom.instanced(fernTrunkGeo, M.barkMossy, fernTrunkMatrices, { castShadow: true, receiveShadow: true }));
   group.add(geom.instanced(fernQuad, foliageMat, fernFrondMatrices, { castShadow: true, receiveShadow: true }));
 
   // 5. GIANT MONSTERA & ELEPHANT EAR CARPET (Lush understory ground cover)
