@@ -22,7 +22,7 @@ export const SHOT_DUR = 7.0;
 const V = (a) => new THREE.Vector3(a[0], a[1], a[2]);
 
 export const SHOTS = [
-  // Shot 0: The Grand Reveal
+  // Shot 0: The Grand Reveal (00:00 - 00:07)
   {
     name: 'The Grand Reveal — Elevated wide vista advancing through humid atmosphere toward the 212m waterfall',
     ease: 'inout',
@@ -34,19 +34,19 @@ export const SHOTS = [
     post: { exposure: 1.05, fog: 0.78, bloom: 0.05, contrast: 1.05, saturation: 1.04 },
   },
 
-  // Shot 1: Above the Canopy
+  // Shot 1: Above the Canopy (00:07 - 00:14)
   {
     name: 'Above the Canopy — Smooth aerial lateral glide over undulating tree crowns revealing river glimpses below',
     ease: 'inout',
     keys: [
-      { pos: [95, 78, 65],  look: [-25, 48, -150], focal: 28, focus: 190, fstop: 6.3 },
-      { pos: [20, 72, -15], look: [-40, 52, -210], focal: 30, focus: 170, fstop: 6.3 },
+      { pos: [75, 76, 50],  look: [-25, 48, -150], focal: 28, focus: 190, fstop: 6.3 },
+      { pos: [25, 72, -10], look: [-38, 52, -200], focal: 30, focus: 170, fstop: 6.3 },
     ],
     shadow: { center: [25, 55, -90], radius: 220 },
     post: { exposure: 1.05, fog: 0.78, bloom: 0.06, contrast: 1.06, saturation: 1.04 },
   },
 
-  // Shot 2: Through the Forest
+  // Shot 2: Through the Forest (00:14 - 00:21)
   {
     name: 'Through the Forest — Intimate understory dolly past buttress roots and monstera fronds with distant waterfall framing',
     ease: 'reveal',
@@ -58,67 +58,67 @@ export const SHOTS = [
     post: { exposure: 1.05, dof: true, focus: 15, fstop: 3.5, bloom: 0.06, aoStrength: 0.85, contrast: 1.06 },
   },
 
-  // Shot 3: The River Journey
+  // Shot 3: The River Journey (00:21 - 00:28)
   {
     name: 'The River Journey — Gliding downstream over the turquoise river past boulders, ripples, and lush riverbanks',
     ease: 'inout',
     keys: [
-      { pos: [16, 24.2, -45],   look: [-12, 25.8, -125], focal: 26, focus: 75, fstop: 5.6 },
-      { pos: [-14, 25.4, -115], look: [-36, 27.2, -195], focal: 28, focus: 85, fstop: 5.6 },
+      { pos: [12, 24.2, -55],   look: [-12, 25.8, -135], focal: 26, focus: 75, fstop: 5.6 },
+      { pos: [-10, 25.4, -115], look: [-34, 27.2, -195], focal: 28, focus: 85, fstop: 5.6 },
     ],
     shadow: { center: [-5, 26, -120], radius: 120 },
     post: { exposure: 1.06, fog: 0.76, bloom: 0.07, contrast: 1.05, saturation: 1.05 },
   },
 
-  // Shot 4: The Waterfall Approach
+  // Shot 4: The Waterfall Approach (00:28 - 00:35)
   {
     name: 'The Waterfall Approach — Approaching the cascade and tilting upward to reveal the staggering 212m drop',
     ease: 'inout',
     keys: [
       { pos: [-50, 31.0, -170], look: [-50, 75, -280],  focal: 24, focus: 105, fstop: 5.6 },
-      { pos: [-50, 32.5, -205], look: [-50, 165, -295], focal: 22, focus: 90,  fstop: 5.6 },
+      { pos: [-50, 32.5, -205], look: [-50, 155, -295], focal: 22, focus: 90,  fstop: 5.6 },
     ],
     shadow: { center: [-50, 110, -270], radius: 150 },
     post: { exposure: 1.06, fog: 0.82, bloom: 0.08, vol: 0.22, volDensity: 0.006, volHeight: 50, contrast: 1.06 },
   },
 
-  // Shot 5: The Plunge Pool
+  // Shot 5: The Plunge Pool (00:35 - 00:42)
   {
     name: 'The Plunge Pool — Dramatic orbital tracking arc around the boiling foam basin and wet spray-zone rocks',
     ease: 'inout',
     keys: [
-      { pos: [-95, 33.5, -225], look: [-45, 85, -275], focal: 26, focus: 55, fstop: 5.6 },
-      { pos: [-10, 34.0, -215], look: [-52, 95, -278], focal: 26, focus: 60, fstop: 5.6 },
+      { pos: [-75, 33.5, -225], look: [-48, 85, -275], focal: 26, focus: 55, fstop: 5.6 },
+      { pos: [-25, 34.0, -220], look: [-48, 95, -278], focal: 26, focus: 60, fstop: 5.6 },
     ],
     shadow: { center: [-50, 45, -250], radius: 95 },
     post: { exposure: 1.06, fog: 0.82, bloom: 0.08, vol: 0.18, volDensity: 0.005, contrast: 1.06 },
   },
 
-  // Shot 6: The Cliffside Ascent
+  // Shot 6: The Cliffside Ascent (00:42 - 00:49)
   {
     name: 'The Cliffside Ascent — Controlled arcing climb up the eastern basalt escarpment flanking the cataract',
     ease: 'inout',
     keys: [
-      { pos: [45, 55, -235],  look: [-35, 95, -290],  focal: 24, focus: 95, fstop: 6.3 },
-      { pos: [15, 195, -265], look: [-45, 235, -310], focal: 24, focus: 90, fstop: 6.3 },
+      { pos: [35, 75, -245],  look: [-35, 115, -290], focal: 24, focus: 95, fstop: 6.3 },
+      { pos: [18, 165, -265], look: [-45, 215, -310], focal: 24, focus: 90, fstop: 6.3 },
     ],
     shadow: { center: [-20, 130, -275], radius: 160 },
     post: { exposure: 1.05, fog: 0.80, bloom: 0.07, contrast: 1.06, saturation: 1.03 },
   },
 
-  // Shot 7: The Mountain Panorama
+  // Shot 7: The Mountain Panorama (00:49 - 00:56)
   {
     name: 'The Mountain Panorama — High-altitude panoramic sweep across the northern sedimentary mountain skyline',
     ease: 'inout',
     keys: [
-      { pos: [55, 330, 60],   look: [-30, 460, -840], focal: 22, focus: 900, fstop: 8.0 },
-      { pos: [-65, 345, 20],  look: [-60, 470, -860], focal: 24, focus: 900, fstop: 8.0 },
+      { pos: [45, 330, 50],   look: [-30, 460, -840], focal: 22, focus: 900, fstop: 8.0 },
+      { pos: [-45, 340, 20],  look: [-55, 470, -860], focal: 24, focus: 900, fstop: 8.0 },
     ],
     shadow: { center: [0, 380, -600], radius: 450 },
     post: { exposure: 1.04, fog: 0.82, bloom: 0.06, contrast: 1.08, saturation: 1.02 },
   },
 
-  // Shot 8: Sunlight Through the Canopy
+  // Shot 8: Sunlight Through the Canopy (00:56 - 01:03)
   {
     name: 'Sunlight Through the Canopy — Drifting through emergent crowns with golden backlighting and volumetric sunbeams',
     ease: 'inout',
@@ -130,7 +130,7 @@ export const SHOTS = [
     post: { exposure: 1.06, fog: 0.78, bloom: 0.08, godrays: 0.15, contrast: 1.06, saturation: 1.05 },
   },
 
-  // Shot 9: The Final Master Shot
+  // Shot 9: The Final Master Shot (01:03 - 01:10)
   {
     name: 'The Final Master Shot — Majestic wide composition framing the complete rainforest ecosystem, decelerating gracefully',
     ease: 'inout',
