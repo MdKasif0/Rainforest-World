@@ -380,7 +380,7 @@ async function runRender() {
     const getCam = (t) => evalShot(shot, Math.min(Math.max(t, 0), SHOT_DUR - 1e-4));
     renderFrame({ getCam, T, tLocal, dt: 1 / fps, spp: SPP, fade, target: pipeline.outRT, frameIndex: f });
     await renderer.readRenderTargetPixelsAsync(pipeline.outRT, 0, 0, W, H, buf);
-    await fetch(`http://localhost:${port}/frame?i=${f}`, { method: 'POST', body: buf });
+    await fetch(`http://127.0.0.1:${port}/frame?i=${f}`, { method: 'POST', body: buf });
     // show the frame on canvas too
     pipeline.copyMat.uniforms.tIn.value = pipeline.outRT.texture;
     pipeline._pass(pipeline.copyMat, null);
@@ -391,7 +391,7 @@ async function runRender() {
     if (coolMs > 0) await new Promise((r) => setTimeout(r, coolMs));
     if (restEvery > 0 && (f + 1 - from) % restEvery === 0) { console.log('[info] cool-down rest after frame', f + 1); await new Promise((r) => setTimeout(r, restMs)); }
   }
-  await fetch(`http://localhost:${port}/done`, { method: 'POST', body: 'ok' });
+  await fetch(`http://127.0.0.1:${port}/done`, { method: 'POST', body: 'ok' });
   window.__READY = true;
 }
 
