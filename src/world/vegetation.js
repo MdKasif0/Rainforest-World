@@ -262,8 +262,9 @@ export async function build(ctx) {
   const cameraCorridors = [
     { x: -50, z: -175, r: 14.0 }, // Shot 1 Waterfall plunge pool view
     { x: -50, z: -200, r: 14.0 },
-    { x: -48, z: 12,   r: 4.0 },  // Shot 3 Jungle interior (preserve close framing)
-    { x: -42, z: -18,  r: 4.0 },
+    { x: -48, z: 12,   r: 10.0 }, // Shot 3 Jungle interior dolly track
+    { x: -45, z: -3,   r: 11.0 },
+    { x: -42, z: -18,  r: 10.0 },
     { x: -10, z: -105, r: 10.0 }, // Shot 4 River glide
     { x: -22, z: -145, r: 10.0 },
   ];

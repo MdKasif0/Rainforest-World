@@ -53,6 +53,14 @@ vec3 n_bumpView(vec3 p, vec3 n, float h, float strength){
   return normalize(abs(det) * n - strength * grad);
 }
 vec3 n_worldNormalFromView(vec3 nv){ return normalize((vec4(nv, 0.0) * viewMatrix).xyz); }
+
+float getEnvironmentalMoisture(vec3 wp) {
+  float distPlunge = length(wp.xz - vec2(-50.0, -265.0));
+  float plungeSpray = smoothstep(95.0, 20.0, distPlunge);
+  float riverX = wp.x - (-48.0 + sin(wp.z * 0.012) * 25.0);
+  float riverMoist = smoothstep(36.0, 6.0, abs(riverX)) * smoothstep(60.0, 18.0, wp.y);
+  return clamp(max(plungeSpray * 0.92, riverMoist * 0.72), 0.0, 1.0);
+}
 `;
 
 export function patch(mat, o = {}) {

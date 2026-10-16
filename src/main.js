@@ -168,7 +168,7 @@ function applyCamera(cam, c, jitterIndex = -1) {
 }
 
 function setTime(T) {
-  G.uTime.value = T + 37.0;
+  ENV_SYSTEM.update(T);
   pipeline.time = T;
   SKY_UNIFORMS.uCloudOffset.value.set(T * 0.004, T * 0.0016);
   for (const fn of updates) fn(T, ctx);
