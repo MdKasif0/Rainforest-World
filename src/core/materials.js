@@ -329,6 +329,12 @@ PROC.wood = (base = 'vec3(0.24, 0.15, 0.09)', grainAxis = 'x') => {
 
 // 1. Procedural Tree Bark Family (dry bark, wet bark with water runnels, mossy bark, and soil-blended buttress roots)
 PROC.treeBarkDetailed = (variant = 'dry') => ({
+  vertexWorld: /* glsl */ `
+    // Trunk & branch wind sway:
+    // flex increases with altitude (y) so root bases remain locked to terrain
+    float trunkFlex = clamp((wPos4.y - 10.0) / 45.0, 0.0, 1.0);
+    wPos4.xyz += windOffsetDetailed(wPos4.xyz, trunkFlex * 0.35, trunkFlex * 0.45, 0.0);
+  `,
   fragHead: /* glsl */ `float g_h; float g_moss; float g_wet;`,
   fragColor: /* glsl */ `
     {
@@ -352,10 +358,11 @@ PROC.treeBarkDetailed = (variant = 'dry') => ({
       g_moss = smoothstep(0.52 - 0.35 * up * isMossy, 0.82, mossNoise + up * 0.35) * isMossy;
       vec3 mossCol = mix(vec3(0.04, 0.13, 0.02), vec3(0.08, 0.22, 0.05), n_snoise3(wp * 3.5) * 0.5 + 0.5);
       
-      // Wetness factor: water seep runnels and spray saturation
+      // Wetness factor: water seep runnels and environmental moisture mask
       float isWet = ${variant === 'wet' ? '1.0' : variant === 'root' ? '0.6' : '0.0'};
+      float envM = getEnvironmentalMoisture(wp);
       float runnels = smoothstep(0.35, 0.80, n_fbm3(vec3(wp.x * 2.2, wp.y * 0.15 - uTime * 0.35, wp.z * 2.2), 3));
-      g_wet = clamp(isWet * (0.65 + 0.35 * runnels), 0.0, 1.0);
+      g_wet = clamp(max(isWet * (0.65 + 0.35 * runnels), envM * 0.85), 0.0, 1.0);
       
       ${variant === 'root' ? `
         // Soil encrustation for ground-hugging buttress roots
@@ -437,8 +444,9 @@ PROC.rockDetailed = (type = 'basalt', wetness = '0.0', mossAmt = '0.65') => ({
       g_moss = clamp(smoothstep(0.55 - 0.45 * up * ${mossAmt}, 0.85, mossNoise + up * 0.3) * ${mossAmt} * elevFade, 0.0, 1.0);
       vec3 mossCol = mix(vec3(0.04, 0.12, 0.02), vec3(0.09, 0.22, 0.05), n_snoise3(wp * 2.8) * 0.5 + 0.5);
 
-      // Water spray wetness darkening and glistening sheen
-      g_wet = clamp(${wetness}, 0.0, 1.0);
+      // Water spray wetness darkening and glistening sheen via environmental moisture mask
+      float envRockM = getEnvironmentalMoisture(wp);
+      g_wet = clamp(max(${wetness}, envRockM), 0.0, 1.0);
       vec3 col = mix(rockCol, mossCol, g_moss);
       col *= (1.0 - g_wet * 0.48);
 
