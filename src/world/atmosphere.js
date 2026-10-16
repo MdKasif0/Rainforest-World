@@ -19,6 +19,16 @@ export async function build(ctx) {
     side: THREE.DoubleSide,
     depthWrite: false,
   }, {
+    vertexWorld: /* glsl */ `
+      {
+        float t = uTime * 0.45;
+        // Convective expansion and rolling vortex motion
+        float roll = sin(wPos4.y * 0.08 - t * 1.5 + wPos4.x * 0.05) * 2.8;
+        float drift = cos(wPos4.z * 0.06 - t * 0.9) * 2.2;
+        wPos4.xz += uWindDir * (roll * 0.65 + drift * 0.35);
+        wPos4.y += sin(t * 1.2 + wPos4.x * 0.04) * 1.2;
+      }
+    `,
     fragHead: /* glsl */ `float g_mist;`,
     fragColor: /* glsl */ `
       {

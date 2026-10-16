@@ -517,6 +517,16 @@ PROC.tropicalLeafPhys = (type = 'broadleaf', subsurface = '0.75') => ({
 
 // 4. Procedural Waterfall Cascading Foam Surface
 PROC.waterfallFoamDetailed = () => ({
+  vertexWorld: /* glsl */ `
+    {
+      float t = uTime * 4.2;
+      // High-speed downward cascading surges and cavitation ripples
+      float waveV = sin(wPos4.y * 0.45 - t * 1.8 + wPos4.x * 0.22) * 0.35;
+      float microV = sin(wPos4.y * 1.25 - t * 4.2 + wPos4.z * 0.4) * 0.15;
+      // Cascade surges outward from cliff face
+      wPos4.z += (waveV + microV) * 0.55;
+    }
+  `,
   fragHead: /* glsl */ `float g_foam; float g_core;`,
   fragColor: /* glsl */ `
     {
@@ -565,6 +575,17 @@ PROC.waterfallFoamDetailed = () => ({
 
 // 5. Procedural Plunge Pool Boiling Foam Disks (Radial expanding froth)
 PROC.plungePoolFoam = () => ({
+  vertexWorld: /* glsl */ `
+    {
+      vec2 center = vec2(-50.0, -265.0);
+      float r = length(wPos4.xz - center);
+      float t = uTime * 2.8;
+      // Concentric boiling shockwaves expanding outward from cascade impact
+      float boilWave = sin(r * 0.42 - t * 2.4) * exp(-r * 0.045);
+      float boilChurn = n_snoise3(vec3(wPos4.x * 0.15, t * 1.2, wPos4.z * 0.15)) * 0.35;
+      wPos4.y += (boilWave * 0.55 + boilChurn * 0.3) * smoothstep(55.0, 5.0, r);
+    }
+  `,
   fragHead: /* glsl */ `float g_froth;`,
   fragColor: /* glsl */ `
     {
@@ -600,6 +621,15 @@ PROC.plungePoolFoam = () => ({
 
 // 6. Physically Based River Water with Fresnel, Flow Velocity & Depth Extinction
 PROC.riverWaterPhys = () => ({
+  vertexWorld: /* glsl */ `
+    {
+      float t = uTime;
+      // Multi-scale current swell along +Z flow
+      float swell = sin(wPos4.z * 0.12 - t * 1.4 + wPos4.x * 0.06) * 0.18;
+      float chop = sin(wPos4.x * 0.32 + wPos4.z * 0.22 - t * 2.1) * 0.08;
+      wPos4.y += swell + chop;
+    }
+  `,
   fragHead: /* glsl */ `float g_wave; float g_foam;`,
   fragColor: /* glsl */ `
     {
@@ -615,10 +645,13 @@ PROC.riverWaterPhys = () => ({
       float ripple = n_snoise3(vec3(wp.x * 1.8, t * 2.2, wp.z * 1.8)) * 0.5 + 0.5;
       g_wave = (swell * 0.4 + chop1 * 0.3 + chop2 * 0.2 + ripple * 0.4) * 0.4;
       
-      // Rapids foam along fast channel and near obstacles
+      // Rapids foam along fast channel and wake turbulence around river boulders
       float rapidNoise = n_fbm3(vec3(wp.x * 0.32, wp.y * 0.1, flowZ * 0.4), 3);
       float rf = smoothstep(0.52, 0.82, rapidNoise);
-      g_foam = rf;
+      float wakeNoise = n_fbm3(vec3(wp.x * 0.55, wp.y * 0.2, flowZ * 0.65), 3);
+      float obstacleWake = smoothstep(0.48, 0.78, wakeNoise);
+      float totalFoam = clamp(rf + obstacleWake * 0.55, 0.0, 1.0);
+      g_foam = totalFoam;
       
       // Clear tropical water: shallow turquoise-emerald to deep ink-teal
       vec3 shallowTurquoise = vec3(0.10, 0.48, 0.45);
@@ -626,9 +659,9 @@ PROC.riverWaterPhys = () => ({
       vec3 waterCol = mix(deepTeal, shallowTurquoise, sin(wp.x * 0.08 + wp.z * 0.05) * 0.5 + 0.5);
       vec3 foamCol = vec3(0.97, 0.99, 1.0);
       
-      diffuseColor.rgb = mix(waterCol, foamCol, rf * 0.88);
+      diffuseColor.rgb = mix(waterCol, foamCol, totalFoam * 0.88);
       // Realistic water transmission: opaque in foam, translucent in clear current
-      diffuseColor.a = mix(0.85, 0.99, rf);
+      diffuseColor.a = mix(0.85, 0.99, totalFoam);
     }
   `,
   fragRough: /* glsl */ `

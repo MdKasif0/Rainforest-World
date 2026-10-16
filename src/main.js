@@ -10,6 +10,7 @@ import * as geom from './core/geom.js';
 import { rng } from './core/rng.js';
 import { L } from './layout.js';
 import { SHOTS, evalShot, SHOT_DUR, FILM_DURATION } from './shots.js';
+import { ENV_SYSTEM } from './core/environment.js';
 
 // ---------------------------------------------------------------------------
 // URL parameters
@@ -29,7 +30,7 @@ const MODE = Q.get('mode') || (Q.has('shot') || Q.has('cam') ? 'still' : 'dev');
 const QUALITY = Q.get('q') || (MODE === 'dev' ? 'preview' : 'final');
 const SPP = +Q.get('spp') || (MODE === 'render' ? 8 : MODE === 'still' ? 4 : 1);
 
-export const ALL_MODULES = ['terrain', 'mountains', 'cliffs', 'river', 'waterfalls', 'rocks', 'vegetation', 'atmosphere'];
+export const ALL_MODULES = ['terrain', 'mountains', 'cliffs', 'river', 'waterfalls', 'rocks', 'vegetation', 'atmosphere', 'ecosystem'];
 
 const status = (s) => { const el = document.getElementById('status'); if (el) el.textContent = s; };
 

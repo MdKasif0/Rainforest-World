@@ -94,7 +94,7 @@ export async function build(ctx) {
   }, {
     vertexWorld: /* glsl */ `
       float flex = clamp((wPos4.y - 8.0) / 45.0, 0.0, 1.0);
-      wPos4.xyz += windOffset(wPos4.xyz, flex);
+      wPos4.xyz += windOffsetDetailed(wPos4.xyz, flex, flex * 0.75, 1.0);
     `,
     fragColor: /* glsl */ `
       {
@@ -118,6 +118,38 @@ export async function build(ctx) {
     fragNormal: /* glsl */ `
       // Delicate vein normal perturbation
       normal = n_bumpView(-vViewPosition, normal, n_snoise3(vWPos * 28.0), 0.005);
+    `,
+  });
+
+  // Specialized hanging liana material with delayed pendulum swing physics
+  const lianaMat = mat.std({
+    color: 0x42382e,
+    roughness: 0.94,
+    metalness: 0.0,
+  }, {
+    vertexWorld: /* glsl */ `
+      // Pendulum swing amplitude increases towards lower hanging tip
+      float lenFactor = clamp((48.0 - wPos4.y) / 28.0, 0.0, 1.0);
+      wPos4.xyz += lianaWindOffset(wPos4.xyz, lenFactor);
+    `,
+  });
+
+  // Specialized tree fern material with independent frond bowing & vibration
+  const fernMat = mat.std({
+    map: atlas,
+    alphaTest: 0.38,
+    roughness: 0.32,
+    metalness: 0.0,
+    side: THREE.DoubleSide,
+    transparent: false,
+  }, {
+    vertexWorld: /* glsl */ `
+      wPos4.xyz += fernFrondWindOffset(wPos4.xyz, 0.85);
+    `,
+    fragLight: /* glsl */ `
+      float backDot = max(0.0, dot(-geometryNormal, directLight.direction));
+      vec3 transCol = diffuseColor.rgb * vec3(1.35, 1.50, 0.75);
+      reflectedLight.directDiffuse += directLight.color * transCol * backDot * 0.95;
     `,
   });
 
@@ -223,7 +255,7 @@ export async function build(ctx) {
   group.add(geom.instanced(emergentTrunkGeo, M.barkWet, emergentTrunkMatrices, { castShadow: true, receiveShadow: true }));
   group.add(geom.instanced(buttressFinGeo, M.barkRoot, buttressMatrices, { castShadow: true, receiveShadow: true }));
   group.add(geom.instanced(scaffoldGeo, M.barkDry, scaffoldMatrices, { castShadow: true, receiveShadow: true }));
-  group.add(geom.instanced(lianaGeo, M.barkMossy, lianaMatrices, { castShadow: true, receiveShadow: false }));
+  group.add(geom.instanced(lianaGeo, lianaMat, lianaMatrices, { castShadow: true, receiveShadow: false }));
   group.add(geom.instanced(broadleafVol, foliageMat, emergentFoliageMatrices, { castShadow: true, receiveShadow: true }));
 
   // Camera clearance corridors to keep cinematic shot sightlines clean
@@ -354,7 +386,7 @@ export async function build(ctx) {
   }
 
   group.add(geom.instanced(fernTrunkGeo, M.barkMossy, fernTrunkMatrices, { castShadow: true, receiveShadow: true }));
-  group.add(geom.instanced(fernQuad, foliageMat, fernFrondMatrices, { castShadow: true, receiveShadow: true }));
+  group.add(geom.instanced(fernQuad, fernMat, fernFrondMatrices, { castShadow: true, receiveShadow: true }));
 
   // 5. GIANT MONSTERA & ELEPHANT EAR CARPET (Lush understory ground cover)
   const monsteraQuad = makeFoliageQuad(1, 1, 3.8, 4.6);
