@@ -81,7 +81,7 @@ export async function build(ctx) {
   cliffGeo.setIndex(indices);
   cliffGeo.computeVertexNormals();
 
-  const cliffMesh = new THREE.Mesh(cliffGeo, M.cliff);
+  const cliffMesh = new THREE.Mesh(cliffGeo, M.cliffDark);
   cliffMesh.castShadow = true;
   cliffMesh.receiveShadow = true;
   group.add(cliffMesh);
@@ -97,7 +97,7 @@ export async function build(ctx) {
     wpos.setZ(i, wpos.getZ(i) + n);
   }
   wetGeo.computeVertexNormals();
-  const wetMesh = new THREE.Mesh(wetGeo, M.rockWet);
+  const wetMesh = new THREE.Mesh(wetGeo, M.cliffSplash);
   wetMesh.receiveShadow = true;
   group.add(wetMesh);
 

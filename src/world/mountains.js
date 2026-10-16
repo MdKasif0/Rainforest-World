@@ -112,7 +112,7 @@ export async function build(ctx) {
   mountainGeo.computeBoundingSphere();
   mountainGeo.computeBoundingBox();
 
-  const mountainMesh = new THREE.Mesh(mountainGeo, M.rock);
+  const mountainMesh = new THREE.Mesh(mountainGeo, M.cliffSedimentary);
   mountainMesh.castShadow = true;
   mountainMesh.receiveShadow = true;
   group.add(mountainMesh);
@@ -133,7 +133,7 @@ export async function build(ctx) {
   }
   distantGeo.computeVertexNormals();
 
-  const distantMesh = new THREE.Mesh(distantGeo, M.cliff);
+  const distantMesh = new THREE.Mesh(distantGeo, M.graniteDry);
   distantMesh.castShadow = false;
   distantMesh.receiveShadow = true;
   group.add(distantMesh);
