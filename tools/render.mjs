@@ -78,7 +78,11 @@ const server = http.createServer((req, res) => {
       const el = (Date.now() - t0) / 1000;
       const per = el / frames;
       const remain = (opt.to - i - 1) * per;
-      if (frames % 10 === 0 || frames < 4) console.log(`[render] frame ${i + 1}/${opt.to}  ${per.toFixed(2)} s/frame  ETA ${(remain / 60).toFixed(1)} min`);
+      const currentShot = Math.min(Math.floor(i / (opt.fps * 7)), 9);
+      const shotFrame = i % (opt.fps * 7);
+      if (frames % 10 === 0 || frames < 4 || (i + 1) % (opt.fps * 7) === 0) {
+        console.log(`[render] frame ${i + 1}/${opt.to} (Shot ${currentShot} [${shotFrame + 1}/${opt.fps * 7}])  ${per.toFixed(2)} s/frame  ETA ${(remain / 60).toFixed(1)} min`);
+      }
       if (ok) { res.writeHead(200); res.end('ok'); } else ff.stdin.once('drain', () => { res.writeHead(200); res.end('ok'); });
     } else if (url.pathname === '/done') {
       done = true; res.writeHead(200); res.end('ok');

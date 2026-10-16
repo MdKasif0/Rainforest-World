@@ -17,7 +17,7 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const o = { video: 'out/temple.mp4', out: 'out/temple_final.mp4', music: 'assets_audio/finding_movement.mp3', score: 'out/score.wav' };
+const o = { video: 'out/rainforest-raw.mp4', out: 'out/rainforest-film.mp4', music: 'assets_audio/finding_movement.mp3', score: 'out/score.wav' };
 const a = process.argv.slice(2);
 for (let i = 0; i < a.length; i++) { const k = a[i].replace(/^--/, ''); if (k in o) o[k] = a[++i]; }
 
