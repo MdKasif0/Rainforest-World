@@ -547,6 +547,12 @@ PROC.waterfallFoamDetailed = () => ({
   fragNormal: /* glsl */ `
     normal = n_bumpView(-vViewPosition, normal, g_foam * 0.8 + g_core * 0.4, 0.05);
   `,
+  fragLight: /* glsl */ `
+    // Aeration multiple scattering inside whitewater foam:
+    float foamScatter = g_foam * 0.45;
+    reflectedLight.directDiffuse += uSunColor * (foamScatter * 0.32);
+    reflectedLight.indirectDiffuse += vec3(0.40, 0.48, 0.50) * foamScatter;
+  `,
 });
 
 // 5. Procedural Plunge Pool Boiling Foam Disks (Radial expanding froth)

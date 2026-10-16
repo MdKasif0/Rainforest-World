@@ -33,8 +33,8 @@ export async function build(ctx) {
         // Natural waterfall trajectory: parabolic launch over brink, stepped collision on ledges, base plunge
         // Parabolic launch near brink
         const launch = Math.sin(Math.pow(v, 0.45) * Math.PI) * 7.5;
-        // Mid-fall rock shelf impact (at v = 0.55, rock ledge pushes water outward)
-        const ledgeBump = Math.exp(-Math.pow((v - 0.55) / 0.12, 2.0)) * 4.0;
+        // Mid-fall natural rock shelf cascade (smooth 1.5m rock contour)
+        const ledgeBump = Math.exp(-Math.pow((v - 0.55) / 0.18, 2.0)) * 1.5;
         
         const currentZ = lerp(lipPos[2], basePos[2], v) + launch + ledgeBump + zOffset;
         const currentX = lerp(lipPos[0], basePos[0], v);
@@ -75,7 +75,7 @@ export async function build(ctx) {
       geo.computeVertexNormals();
 
       const mesh = new THREE.Mesh(geo, M.waterfall);
-      mesh.castShadow = true;
+      mesh.castShadow = false;
       colGroup.add(mesh);
     }
 
@@ -127,13 +127,6 @@ export async function build(ctx) {
   outerRippleGeo.translate(impactCenter[0], impactCenter[1] + 0.05, impactCenter[2]);
   const outerRippleMesh = new THREE.Mesh(outerRippleGeo, M.plungeFoam);
   group.add(outerRippleMesh);
-
-  // 3. Mid-Drop Rock Shelf Collision Whitewater Mass (at y = 135 where water impacts protruding basalt shelf)
-  const shelfImpactGeo = new THREE.CylinderGeometry(24, 28, 6, 24, 2, false, 0, Math.PI);
-  shelfImpactGeo.rotateX(0.25);
-  shelfImpactGeo.translate(wf.lip.center[0], 134, wf.lip.center[2] + 16);
-  const shelfImpactMesh = new THREE.Mesh(shelfImpactGeo, M.whitewaterFoam);
-  group.add(shelfImpactMesh);
 
   // 4. Secondary Cascades (East & West)
   for (const sw of L.secondaryWaterfalls) {
