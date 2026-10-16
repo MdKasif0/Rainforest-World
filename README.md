@@ -6,35 +6,36 @@ A photorealistic procedural tropical rainforest environment built entirely in co
 
 ## What this is
 
-Everything you see is code. The repository contains **no 3D models, no downloaded texture files, and no HDRI environment maps**. The mountains, knife-edge alpine peaks, basalt cliffs, 212m primary waterfall, secondary cascades, winding river, plunge pool, Kapok buttress-root trees, palms, tree ferns, monstera understory, and atmospheric mist are all generated procedurally in JavaScript at runtime, and every surface is procedural GLSL injected into Three.js physically based materials.
+Everything you see is code. The repository contains **no 3D models, no downloaded texture files, and no HDRI environment maps**. The mountains, knife-edge alpine peaks, basalt cliffs, 212m primary waterfall, secondary cascades, winding river, plunge pool, Kapok buttress-root trees, palms, tree ferns, monstera understory, fluttering Blue Morpho butterflies, soaring flocking birds, animated wind waves, and atmospheric mist are all generated procedurally in JavaScript at runtime, and every surface is procedural GLSL injected into Three.js physically based materials.
 
 - **Pure Procedural Generation**: Continuous mathematical elevation fields, domain-warped fractal noise, ridged alpine crests, and dendritic erosion channels.
 - **Deterministic**: Every procedural choice uses a seeded pseudo-random number generator (`mulberry32`), guaranteeing bit-identical world reproduction across runs.
-- **Cinematic Camera System**: 5 cinematic shots covering grand valley sweeps, macro jungle framing, soaring mountain vistas, and water reflections.
-- **Offline GPU Capture Pipeline**: Headless Chrome rendering toolchain (`tools/snap.mjs`, `tools/sheet.mjs`, `tools/camcheck.mjs`) supporting sub-frame anti-aliasing, motion blur, and soft shadows.
+- **70-Second Cinematic Film**: Exactly 10 continuous 7-second shots ($00:00 - 01:10$, 4,200 frames @ 60 FPS) capturing aerial canopy glides, understory dollys, river voyages, waterfall climbs, and mountain panoramas.
+- **Living Ecosystem**: Hierarchical wind system, swaying branches, fluttering leaves, flowing river waves, animated spray vortex, flocking tropical birds, dancing dragonflies, and shimmering butterflies.
+- **Offline GPU Capture Pipeline**: Headless Chrome rendering toolchain (`tools/snap.mjs`, `tools/sheet.mjs`, `tools/render.mjs`, `tools/camcheck.mjs`) supporting sub-frame anti-aliasing, motion blur, and soft shadows.
 
 ---
 
-## Master Review Contact Sheet
+## 70-Second Cinematic Film (10 Shots × 7s)
 
-![Rainforest World Contact Sheet](docs/images/rainforest-contact-sheet.jpg)
+![Rainforest Film 10-Shot Contact Sheet](docs/images/rainforest-film-contact-sheet.jpg)
 
-*Generated via `node tools/sheet.mjs --shots 0,1,2,3,4 --t 3.5`. From left to right: Shot 0 (Grand Valley Panorama), Shot 1 (Primary Waterfall & Plunge Pool), Shot 2 (Mountain Ridges & Mist Skyline), Shot 3 (Dense Foreground Jungle & Canopy Framing), and Shot 4 (River & Plunge Pool Outflow).*
+*Master 10-shot review sheet rendered via `node tools/sheet.mjs --shots 0,1,2,3,4,5,6,7,8,9 --t 0.5,3.5,6.5`. 30 frames spanning the complete 70-second film.*
 
----
+| Shot | Time | Description |
+|:---:|:---:|:---|
+| **00** | $00:00 - 00:07$ | **The Grand Reveal** — Elevated wide vista advancing through humid atmosphere toward the 212m waterfall |
+| **01** | $07:00 - 14:00$ | **Above the Canopy** — Smooth aerial lateral glide over undulating tree crowns revealing river glimpses below |
+| **02** | $14:00 - 21:00$ | **Through the Forest** — Intimate understory dolly past buttress roots and monstera fronds with distant cascade framing |
+| **03** | $21:00 - 28:00$ | **The River Journey** — Gliding downstream over the turquoise river past boulders, ripples, and lush riverbanks |
+| **04** | $28:00 - 35:00$ | **The Waterfall Approach** — Approaching the cascade and tilting upward to reveal the staggering 212m drop |
+| **05** | $35:00 - 42:00$ | **The Plunge Pool** — Dramatic orbital tracking arc around the boiling foam basin and wet spray-zone rocks |
+| **06** | $42:00 - 49:00$ | **The Cliffside Ascent** — Controlled arcing climb up the eastern basalt escarpment flanking the cataract |
+| **07** | $49:00 - 56:00$ | **The Mountain Panorama** — High-altitude panoramic sweep across the northern sedimentary mountain skyline |
+| **08** | $56:00 - 01:03$ | **Sunlight Through the Canopy** — Drifting up the river glade with golden backlighting and volumetric sunbeams |
+| **09** | $01:03 - 01:10$ | **The Final Master Shot** — Majestic wide composition framing the complete rainforest ecosystem, decelerating into mist |
 
-## Gallery
-
-| Shot 0: Grand Valley Panorama | Shot 1: Primary 212m Waterfall |
-|:---:|:---:|
-| <img src="docs/images/rainforest-valley.png" width="100%" alt="Grand Valley Panorama"> | <img src="docs/images/rainforest-waterfall.png" width="100%" alt="Primary Waterfall"> |
-| **Shot 2: Mountain Ridges & Skyline** | **Shot 3: Jungle Canopy Framing** |
-| <img src="docs/images/rainforest-mountains.png" width="100%" alt="Mountain Ridges"> | <img src="docs/images/rainforest-vegetation.png" width="100%" alt="Jungle Canopy"> |
-
-<p align="center">
-  <img src="docs/images/rainforest-river.png" width="90%" alt="River and Plunge Pool Outflow"><br>
-  <sub><b>Shot 4: River & Plunge Pool Outflow</b> — Turquoise river surface with gentle ripples and reflections</sub>
-</p>
+See **[PHASE4_CINEMATIC_FILM.md](docs/PHASE4_CINEMATIC_FILM.md)** for detailed shot-by-shot optical breakdowns, trajectories, and rendering commands.
 
 ---
 

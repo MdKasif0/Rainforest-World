@@ -39,8 +39,8 @@ export const SHOTS = [
     name: 'Above the Canopy — Smooth aerial lateral glide over undulating tree crowns revealing river glimpses below',
     ease: 'inout',
     keys: [
-      { pos: [75, 88, 55],  look: [-25, 52, -150], focal: 28, focus: 200, fstop: 6.3 },
-      { pos: [25, 82, -10], look: [-38, 55, -200], focal: 30, focus: 180, fstop: 6.3 },
+      { pos: [85, 116, 60], look: [-25, 55, -140], focal: 28, focus: 220, fstop: 6.3 },
+      { pos: [30, 105, 0],  look: [-38, 55, -190], focal: 30, focus: 200, fstop: 6.3 },
     ],
     shadow: { center: [25, 65, -90], radius: 220 },
     post: { exposure: 1.05, fog: 0.78, bloom: 0.06, contrast: 1.06, saturation: 1.04 },
@@ -99,8 +99,8 @@ export const SHOTS = [
     name: 'The Cliffside Ascent — Controlled arcing climb up the eastern basalt escarpment flanking the cataract',
     ease: 'inout',
     keys: [
-      { pos: [35, 75, -245],  look: [-35, 115, -290], focal: 24, focus: 95, fstop: 6.3 },
-      { pos: [18, 165, -265], look: [-42, 195, -315], focal: 24, focus: 90, fstop: 6.3 },
+      { pos: [20, 60, -210],  look: [-45, 95, -270],  focal: 24, focus: 85, fstop: 6.3 },
+      { pos: [5, 150, -225],  look: [-45, 185, -295], focal: 24, focus: 85, fstop: 6.3 },
     ],
     shadow: { center: [-20, 130, -275], radius: 160 },
     post: { exposure: 1.05, fog: 0.80, bloom: 0.07, contrast: 1.06, saturation: 1.03 },
@@ -123,10 +123,10 @@ export const SHOTS = [
     name: 'Sunlight Through the Canopy — Drifting through emergent crowns with golden backlighting and volumetric sunbeams',
     ease: 'inout',
     keys: [
-      { pos: [-28, 88, 98],  look: [-55, 65, -180], focal: 30, focus: 35, fstop: 4.5 },
-      { pos: [-48, 84, 52],  look: [-52, 70, -220], focal: 28, focus: 40, fstop: 5.6 },
+      { pos: [-15, 38, -60], look: [-28, 62, 40], focal: 30, focus: 65, fstop: 4.0 },
+      { pos: [-22, 44, -20], look: [-32, 68, 70], focal: 28, focus: 75, fstop: 4.5 },
     ],
-    shadow: { center: [-45, 80, 50], radius: 95 },
+    shadow: { center: [-25, 55, 0], radius: 95 },
     post: { exposure: 1.06, fog: 0.78, bloom: 0.08, godrays: 0.15, contrast: 1.06, saturation: 1.05 },
   },
 
