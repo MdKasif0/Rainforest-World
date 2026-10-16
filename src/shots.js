@@ -39,10 +39,10 @@ export const SHOTS = [
     name: 'Above the Canopy — Smooth aerial lateral glide over undulating tree crowns revealing river glimpses below',
     ease: 'inout',
     keys: [
-      { pos: [75, 76, 50],  look: [-25, 48, -150], focal: 28, focus: 190, fstop: 6.3 },
-      { pos: [25, 72, -10], look: [-38, 52, -200], focal: 30, focus: 170, fstop: 6.3 },
+      { pos: [75, 88, 55],  look: [-25, 52, -150], focal: 28, focus: 200, fstop: 6.3 },
+      { pos: [25, 82, -10], look: [-38, 55, -200], focal: 30, focus: 180, fstop: 6.3 },
     ],
-    shadow: { center: [25, 55, -90], radius: 220 },
+    shadow: { center: [25, 65, -90], radius: 220 },
     post: { exposure: 1.05, fog: 0.78, bloom: 0.06, contrast: 1.06, saturation: 1.04 },
   },
 
@@ -100,7 +100,7 @@ export const SHOTS = [
     ease: 'inout',
     keys: [
       { pos: [35, 75, -245],  look: [-35, 115, -290], focal: 24, focus: 95, fstop: 6.3 },
-      { pos: [18, 165, -265], look: [-45, 215, -310], focal: 24, focus: 90, fstop: 6.3 },
+      { pos: [18, 165, -265], look: [-42, 195, -315], focal: 24, focus: 90, fstop: 6.3 },
     ],
     shadow: { center: [-20, 130, -275], radius: 160 },
     post: { exposure: 1.05, fog: 0.80, bloom: 0.07, contrast: 1.06, saturation: 1.03 },
@@ -123,10 +123,10 @@ export const SHOTS = [
     name: 'Sunlight Through the Canopy — Drifting through emergent crowns with golden backlighting and volumetric sunbeams',
     ease: 'inout',
     keys: [
-      { pos: [-30, 85, 95],  look: [-55, 60, -180], focal: 32, focus: 28, fstop: 4.5 },
-      { pos: [-55, 78, 45],  look: [-52, 65, -220], focal: 28, focus: 32, fstop: 5.6 },
+      { pos: [-28, 88, 98],  look: [-55, 65, -180], focal: 30, focus: 35, fstop: 4.5 },
+      { pos: [-48, 84, 52],  look: [-52, 70, -220], focal: 28, focus: 40, fstop: 5.6 },
     ],
-    shadow: { center: [-45, 75, 40], radius: 85 },
+    shadow: { center: [-45, 80, 50], radius: 95 },
     post: { exposure: 1.06, fog: 0.78, bloom: 0.08, godrays: 0.15, contrast: 1.06, saturation: 1.05 },
   },
 

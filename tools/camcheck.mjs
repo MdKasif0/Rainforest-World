@@ -9,9 +9,9 @@
 // ---------------------------------------------------------------------------
 import { evalShot, SHOTS, SHOT_DUR } from '../src/shots.js';
 import { L } from '../src/layout.js';
-import { buildTerrainField } from '../src/world/terrain-field.js';
+import { createRainforestField } from '../src/world/terrain-field.js';
 
-const terrain = buildTerrainField(L);
+const terrain = createRainforestField(L);
 const fps = 60, dt = 1 / fps;
 
 console.log(`\n================================================================================`);
