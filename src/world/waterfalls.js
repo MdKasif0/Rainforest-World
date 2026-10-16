@@ -118,17 +118,24 @@ export async function build(ctx) {
   foamDiskGeo.rotateX(-Math.PI / 2);
   foamDiskGeo.translate(impactCenter[0], impactCenter[1], impactCenter[2]);
 
-  const foamMesh = new THREE.Mesh(foamDiskGeo, M.waterfall);
+  const foamMesh = new THREE.Mesh(foamDiskGeo, M.plungeFoam);
   group.add(foamMesh);
 
   // Outer expanding foam ripple ring
   const outerRippleGeo = new THREE.RingGeometry(42, 74, 48, 4);
   outerRippleGeo.rotateX(-Math.PI / 2);
   outerRippleGeo.translate(impactCenter[0], impactCenter[1] + 0.05, impactCenter[2]);
-  const outerRippleMesh = new THREE.Mesh(outerRippleGeo, M.waterfall);
+  const outerRippleMesh = new THREE.Mesh(outerRippleGeo, M.plungeFoam);
   group.add(outerRippleMesh);
 
-  // 3. Secondary Cascades (East & West)
+  // 3. Mid-Drop Rock Shelf Collision Whitewater Mass (at y = 135 where water impacts protruding basalt shelf)
+  const shelfImpactGeo = new THREE.CylinderGeometry(24, 28, 6, 24, 2, false, 0, Math.PI);
+  shelfImpactGeo.rotateX(0.25);
+  shelfImpactGeo.translate(wf.lip.center[0], 134, wf.lip.center[2] + 16);
+  const shelfImpactMesh = new THREE.Mesh(shelfImpactGeo, M.whitewaterFoam);
+  group.add(shelfImpactMesh);
+
+  // 4. Secondary Cascades (East & West)
   for (const sw of L.secondaryWaterfalls) {
     const secFalls = buildWaterfallColumn(
       sw.lip,
@@ -140,10 +147,10 @@ export async function build(ctx) {
     group.add(secFalls);
 
     // Secondary cascade base foam patch
-    const secFoam = new THREE.CircleGeometry(sw.width * 1.5, 24);
+    const secFoam = new THREE.CircleGeometry(sw.width * 1.6, 24);
     secFoam.rotateX(-Math.PI / 2);
     secFoam.translate(sw.base[0], sw.base[1] + 0.15, sw.base[2]);
-    const secFoamMesh = new THREE.Mesh(secFoam, M.waterfall);
+    const secFoamMesh = new THREE.Mesh(secFoam, M.plungeFoam);
     group.add(secFoamMesh);
   }
 

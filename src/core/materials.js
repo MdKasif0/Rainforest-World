@@ -325,204 +325,384 @@ PROC.wood = (base = 'vec3(0.24, 0.15, 0.09)', grainAxis = 'x') => {
   };
 };
 
-// --- Tropical Rainforest Procedural Materials -------------------------------
+// --- Tropical Rainforest Procedural Materials (Phase 2) -----------------------
 
-// Stratified basalt/granite rock with slope-based moss, fissures and wetness sheen
-PROC.rainforestRock = (mossAmt = '0.75', wetness = '0.0') => ({
+// 1. Procedural Tree Bark Family (dry bark, wet bark with water runnels, mossy bark, and soil-blended buttress roots)
+PROC.treeBarkDetailed = (variant = 'dry') => ({
   fragHead: /* glsl */ `float g_h; float g_moss; float g_wet;`,
   fragColor: /* glsl */ `
     {
       vec3 wp = vWPos; vec3 wn = normalize(vWNrm);
-      float strata = sin(wp.y * 0.28 + n_fbm3(wp * 0.08, 3) * 3.5) * 0.5 + 0.5;
-      float big = n_fbm3(wp * 0.05, 4);
-      float fissure = smoothstep(0.46, 0.54, abs(n_snoise3(wp * 1.5) * 0.5));
-      float speck = n_snoise3(wp * 18.0);
+      // Deep longitudinal furrowing and vertical grain ridges
+      float furrow = n_fbm3(wp * vec3(14.0, 0.7, 14.0), 4);
+      float bigGirth = n_fbm3(wp * 0.28, 3);
+      float microGrain = n_snoise3(wp * vec3(45.0, 3.5, 45.0)) * 0.08;
       
-      // Deep charcoal/basalt base with rich mineral tones
-      vec3 rockCol = vec3(0.12, 0.11, 0.10) * (0.8 + 0.4 * big) * (0.85 + 0.3 * strata);
-      rockCol = mix(rockCol, vec3(0.03, 0.03, 0.03), (1.0 - fissure) * 0.65);
+      // Warm umber bark base
+      vec3 barkCol = vec3(0.20, 0.15, 0.11) * (0.8 + 0.38 * furrow + 0.18 * bigGirth + microGrain);
       
-      // Lichen & mineral oxidisation patches
-      float lich = smoothstep(0.62, 0.82, n_fbm3(wp * 0.6 + 4.1, 4) * 0.5 + 0.5);
-      rockCol = mix(rockCol, vec3(0.24, 0.22, 0.16), lich * 0.35);
+      // Pale sage/grey crustose lichen colonies
+      float lichen = smoothstep(0.60, 0.84, n_fbm3(wp * 1.4 + 9.5, 3) * 0.5 + 0.5);
+      barkCol = mix(barkCol, vec3(0.27, 0.30, 0.24), lichen * 0.42);
       
-      // Slope-based lush velvet moss on upward-facing surfaces (fades at high mountain elevations)
-      float up = smoothstep(0.15, 0.72, wn.y);
-      float mn = n_fbm3(wp * 0.45 + 7.2, 4) * 0.5 + 0.5;
-      float elevFade = smoothstep(220.0, 65.0, wp.y); // moss thrives in humid valley, fades on alpine peaks
-      g_moss = clamp(smoothstep(0.55 - 0.45 * up * ${mossAmt}, 0.85, mn + up * 0.3) * ${mossAmt} * elevFade, 0.0, 1.0);
-      vec3 mossCol = mix(vec3(0.04, 0.11, 0.02), vec3(0.08, 0.20, 0.04), n_snoise3(wp * 2.5) * 0.5 + 0.5);
+      // Lush velvet moss colonies on upward slopes, branch crotches, and humid zones
+      float up = smoothstep(0.18, 0.82, wn.y);
+      float mossNoise = n_fbm3(wp * 0.9 + 4.2, 4) * 0.5 + 0.5;
+      float isMossy = ${variant === 'mossy' ? '1.0' : variant === 'root' ? '0.75' : '0.4'};
+      g_moss = smoothstep(0.52 - 0.35 * up * isMossy, 0.82, mossNoise + up * 0.35) * isMossy;
+      vec3 mossCol = mix(vec3(0.04, 0.13, 0.02), vec3(0.08, 0.22, 0.05), n_snoise3(wp * 3.5) * 0.5 + 0.5);
       
-      // Wetness darkening from waterfall spray or water contact
-      g_wet = clamp(${wetness}, 0.0, 1.0);
-      vec3 col = mix(rockCol, mossCol, g_moss);
+      // Wetness factor: water seep runnels and spray saturation
+      float isWet = ${variant === 'wet' ? '1.0' : variant === 'root' ? '0.6' : '0.0'};
+      float runnels = smoothstep(0.35, 0.80, n_fbm3(vec3(wp.x * 2.2, wp.y * 0.15 - uTime * 0.35, wp.z * 2.2), 3));
+      g_wet = clamp(isWet * (0.65 + 0.35 * runnels), 0.0, 1.0);
+      
+      ${variant === 'root' ? `
+        // Soil encrustation for ground-hugging buttress roots
+        float soilBlend = smoothstep(18.0, 8.0, wp.y);
+        vec3 soilCol = vec3(0.11, 0.08, 0.05) * (0.85 + 0.3 * n_fbm3(wp * 1.5, 3));
+        barkCol = mix(barkCol, soilCol, soilBlend * 0.65);
+      ` : ''}
+
+      vec3 col = mix(barkCol, mossCol, g_moss);
+      // Wet surfaces darken naturally and gain rich humus contrast
       col *= (1.0 - g_wet * 0.45);
       
       diffuseColor.rgb = col;
-      g_h = big * 0.4 + strata * 0.2 + fissure * 0.15 + g_moss * 0.45 + speck * 0.04;
+      g_h = furrow * 0.5 + microGrain * 0.2 + g_moss * 0.35 - g_wet * 0.15;
     }
   `,
   fragRough: /* glsl */ `
-    roughnessFactor = mix(mix(0.65, 0.92, g_moss), 0.10, g_wet);
+    roughnessFactor = mix(mix(0.88, 0.96, g_moss), 0.22, g_wet);
   `,
   fragNormal: /* glsl */ `
-    normal = n_bumpView(-vViewPosition, normal, g_h, 0.035);
+    normal = n_bumpView(-vViewPosition, normal, g_h, 0.012);
   `,
 });
 
-// Vertical cliffs with water stains and striations
-PROC.cliffRock = () => ({
-  fragHead: /* glsl */ `float g_h;`,
+// 2. Procedural Rock Family (Cliff Basalt, Crystalline Granite, Sedimentary Strata, Splash Rocks)
+PROC.rockDetailed = (type = 'basalt', wetness = '0.0', mossAmt = '0.65') => ({
+  fragHead: /* glsl */ `float g_h; float g_moss; float g_wet; float g_fleck;`,
   fragColor: /* glsl */ `
     {
       vec3 wp = vWPos; vec3 wn = normalize(vWNrm);
-      float runStreak = n_fbm3(wp * vec3(1.8, 0.08, 1.8), 4);
-      float detail = n_snoise3(wp * 3.5);
-      float big = n_fbm3(wp * 0.04, 3);
-      float strata = sin(wp.y * 0.32 + n_fbm3(wp * 0.06, 3) * 2.5) * 0.5 + 0.5;
-      
-      // Deep dark volcanic basalt with warm mineral bands
-      vec3 col = vec3(0.11, 0.10, 0.09) * (0.8 + 0.35 * big) * (0.88 + 0.28 * strata);
-      col *= 1.0 - smoothstep(0.25, 0.85, runStreak) * 0.65; // dark vertical water seeps
-      
-      // Ledge vegetation and moss
-      float up = smoothstep(0.18, 0.72, wn.y);
-      float veg = smoothstep(0.55, 0.85, n_fbm3(wp * 0.35 + 2.0, 4) * 0.5 + 0.5) * up;
-      col = mix(col, vec3(0.06, 0.16, 0.03), veg * 0.85);
-      
+      float big = n_fbm3(wp * 0.045, 4);
+      float micro = n_snoise3(wp * 22.0) * 0.06;
+      vec3 rockCol;
+      float strata = 0.0;
+      float runStreak = 0.0;
+
+      ${type === 'granite' ? `
+        // Granite: quartz, feldspar and biotite crystal grains
+        float quartz = smoothstep(0.45, 0.75, n_snoise3(wp * 38.0) * 0.5 + 0.5);
+        float biotite = smoothstep(0.68, 0.88, n_snoise3(wp * 48.0 + 8.1) * 0.5 + 0.5);
+        vec3 feldsparCol = vec3(0.24, 0.21, 0.19);
+        vec3 quartzCol = vec3(0.38, 0.37, 0.35);
+        vec3 biotiteCol = vec3(0.04, 0.04, 0.04);
+        rockCol = mix(feldsparCol, quartzCol, quartz * 0.5);
+        rockCol = mix(rockCol, biotiteCol, biotite * 0.8);
+        rockCol *= (0.85 + 0.3 * big + micro);
+        g_fleck = quartz * 0.4;
+      ` : type === 'sedimentary' ? `
+        // Sedimentary: rhythmic horizontal and tilted geological strata beds
+        strata = sin(wp.y * 0.22 + wp.x * 0.035 + n_fbm3(wp * 0.05, 3) * 3.2) * 0.5 + 0.5;
+        float strataFine = sin(wp.y * 0.85 + n_snoise3(wp * 0.15) * 2.0) * 0.5 + 0.5;
+        vec3 sandstone = vec3(0.25, 0.22, 0.18);
+        vec3 ironstone = vec3(0.29, 0.19, 0.13);
+        vec3 shale = vec3(0.14, 0.13, 0.12);
+        rockCol = mix(sandstone, ironstone, strata * 0.6);
+        rockCol = mix(rockCol, shale, strataFine * 0.4);
+        rockCol *= (0.85 + 0.35 * big);
+        g_fleck = 0.0;
+      ` : `
+        // Basalt / Cliff Rock: dark volcanic rock with columnar jointing and iron oxidation
+        strata = sin(wp.y * 0.30 + n_fbm3(wp * 0.06, 3) * 2.8) * 0.5 + 0.5;
+        runStreak = n_fbm3(wp * vec3(1.8, 0.06, 1.8), 4);
+        float fissure = smoothstep(0.47, 0.53, abs(n_snoise3(wp * 1.6) * 0.5));
+        vec3 basaltBase = vec3(0.10, 0.095, 0.09) * (0.8 + 0.4 * big) * (0.88 + 0.25 * strata);
+        // Dark vertical water seeps
+        basaltBase *= 1.0 - smoothstep(0.25, 0.85, runStreak) * 0.65;
+        // Joint fissures
+        rockCol = mix(basaltBase, vec3(0.02, 0.02, 0.02), (1.0 - fissure) * 0.7);
+        // Lichen & iron oxide patina
+        float iron = smoothstep(0.65, 0.85, n_fbm3(wp * 0.4 + 6.3, 3) * 0.5 + 0.5);
+        rockCol = mix(rockCol, vec3(0.22, 0.15, 0.10), iron * 0.4);
+        g_fleck = 0.0;
+      `}
+
+      // Slope-based velvet moss (abundant in humid gorge, fades on alpine peaks)
+      float up = smoothstep(0.14, 0.75, wn.y);
+      float elevFade = smoothstep(230.0, 60.0, wp.y);
+      float mossNoise = n_fbm3(wp * 0.42 + 7.5, 4) * 0.5 + 0.5;
+      g_moss = clamp(smoothstep(0.55 - 0.45 * up * ${mossAmt}, 0.85, mossNoise + up * 0.3) * ${mossAmt} * elevFade, 0.0, 1.0);
+      vec3 mossCol = mix(vec3(0.04, 0.12, 0.02), vec3(0.09, 0.22, 0.05), n_snoise3(wp * 2.8) * 0.5 + 0.5);
+
+      // Water spray wetness darkening and glistening sheen
+      g_wet = clamp(${wetness}, 0.0, 1.0);
+      vec3 col = mix(rockCol, mossCol, g_moss);
+      col *= (1.0 - g_wet * 0.48);
+
       diffuseColor.rgb = col;
-      g_h = runStreak * 0.4 + detail * 0.12 + big * 0.3 + strata * 0.2;
+      g_h = big * 0.35 + strata * 0.25 + g_moss * 0.4 + micro * 0.15 - runStreak * 0.2;
     }
   `,
-  fragRough: /* glsl */ `roughnessFactor = 0.68;`,
-  fragNormal: /* glsl */ `normal = n_bumpView(-vViewPosition, normal, g_h, 0.04);`,
-});
-
-// Rainforest hardwood tree bark with vertical furrowing and epiphyte moss
-PROC.rainforestBark = () => ({
-  fragHead: /* glsl */ `float g_h; float g_moss;`,
-  fragColor: /* glsl */ `
-    {
-      vec3 wp = vWPos; vec3 wn = normalize(vWNrm);
-      // Strong vertical grain striations
-      float ridges = n_fbm3(wp * vec3(12.0, 0.6, 12.0), 4);
-      float largeGirth = n_fbm3(wp * 0.25, 3);
-      vec3 col = vec3(0.18, 0.13, 0.09) * (0.8 + 0.4 * ridges + 0.15 * largeGirth);
-      
-      // Grey-green lichen patches
-      float lichen = smoothstep(0.62, 0.85, n_fbm3(wp * 1.2 + 8.0, 3) * 0.5 + 0.5);
-      col = mix(col, vec3(0.26, 0.28, 0.22), lichen * 0.45);
-      
-      // Base moss on roots and crotches
-      float up = smoothstep(0.2, 0.85, wn.y);
-      g_moss = smoothstep(0.5, 0.8, n_fbm3(wp * 0.8 + 3.0, 4) * 0.5 + 0.5) * up * 0.8;
-      col = mix(col, vec3(0.05, 0.12, 0.02), g_moss);
-      
-      diffuseColor.rgb *= col;
-      g_h = ridges * 0.5 + g_moss * 0.3;
-    }
+  fragRough: /* glsl */ `
+    roughnessFactor = mix(mix(${type === 'granite' ? '0.76' : '0.84'}, 0.94, g_moss), 0.12, g_wet);
   `,
-  fragRough: /* glsl */ `roughnessFactor = mix(0.88, 0.96, g_moss);`,
-  fragNormal: /* glsl */ `normal = n_bumpView(-vViewPosition, normal, g_h, 0.008);`,
+  fragMetal: /* glsl */ `
+    metalnessFactor = g_fleck * 0.15 + g_wet * 0.05;
+  `,
+  fragNormal: /* glsl */ `
+    normal = n_bumpView(-vViewPosition, normal, g_h, ${type === 'granite' ? '0.028' : '0.042'});
+  `,
 });
 
-// Translucent waxy tropical leaf with subsurface transmission
-PROC.tropicalLeaf = (subsurface = '0.65') => ({
-  fragHead: /* glsl */ `float g_vein;`,
+// 3. Procedural Tropical Leaf Material with physically based subsurface translucency & waxy cuticle
+PROC.tropicalLeafPhys = (type = 'broadleaf', subsurface = '0.75') => ({
+  fragHead: /* glsl */ `float g_vein; float g_cuticle;`,
   fragColor: /* glsl */ `
     {
       vec3 wp = vWPos;
-      float fine = n_snoise3(wp * 40.0) * 0.08;
-      float big = n_fbm3(wp * 2.0, 2) * 0.15;
-      vec3 col = vec3(0.85, 0.95, 0.8) * (0.92 + fine + big);
-      diffuseColor.rgb *= col;
-      g_vein = fine;
+      // Multi-scale chlorophyll variation
+      float macro = n_fbm3(wp * 1.8, 2) * 0.15;
+      float fine = n_snoise3(wp * 35.0) * 0.06;
+      
+      ${type === 'palm' ? `
+        // Parallel linear striations along palm frond
+        float veins = sin(wp.x * 24.0 + wp.z * 24.0) * 0.08;
+      ` : `
+        // Branching reticulate venation
+        float veins = n_snoise3(wp * 48.0) * 0.09;
+      `}
+      g_vein = veins;
+      
+      // Height and exposure chlorophyll gradation (tender sun-facing vs deep shade)
+      float sunExposure = smoothstep(12.0, 48.0, wp.y);
+      vec3 youngFoliage = vec3(0.18, 0.40, 0.08);
+      vec3 matureFoliage = vec3(0.08, 0.22, 0.05);
+      vec3 leafTint = mix(matureFoliage, youngFoliage, sunExposure * 0.5 + macro);
+      
+      // Pale yellow-green vein highlights
+      leafTint = mix(leafTint, vec3(0.24, 0.42, 0.10), max(0.0, veins * 1.5));
+      
+      diffuseColor.rgb *= leafTint * 2.4;
+      g_cuticle = 0.85 + fine;
     }
   `,
   fragLight: /* glsl */ `
     {
-      float backLight = max(0.0, dot(-geometryNormal, directLight.direction));
-      reflectedLight.directDiffuse += directLight.color * diffuseColor.rgb * backLight * ${subsurface};
+      // Physically motivated two-sided subsurface transmission
+      // Backlight wraps around thin leaf lamina with warm luminous emerald-gold scatter
+      float backDot = max(0.0, dot(-geometryNormal, directLight.direction));
+      vec3 transCol = diffuseColor.rgb * vec3(1.35, 1.55, 0.75);
+      reflectedLight.directDiffuse += directLight.color * transCol * backDot * ${subsurface};
     }
   `,
-  fragRough: /* glsl */ `roughnessFactor = 0.32;`,
-  fragNormal: /* glsl */ `normal = n_bumpView(-vViewPosition, normal, g_vein, 0.003);`,
+  fragRough: /* glsl */ `
+    // Waxy tropical leaf cuticle: low roughness for specular sheen
+    roughnessFactor = clamp(0.26 + g_vein * 0.4, 0.18, 0.48);
+  `,
+  fragNormal: /* glsl */ `
+    normal = n_bumpView(-vViewPosition, normal, g_vein, 0.006);
+  `,
 });
 
-// Waterfall animated turbulent foam surface
-PROC.waterfallFoam = () => ({
-  fragHead: /* glsl */ `
-    float g_foam;
-  `,
+// 4. Procedural Waterfall Cascading Foam Surface
+PROC.waterfallFoamDetailed = () => ({
+  fragHead: /* glsl */ `float g_foam; float g_core;`,
   fragColor: /* glsl */ `
     {
       vec3 wp = vWPos;
-      float t = uTime * 3.5;
-      // Multi-layer downward cascading noise with varying velocities
-      vec2 uv1 = vec2(wp.x * 0.14, wp.y * 0.28 - t);
-      vec2 uv2 = vec2(wp.x * 0.32 + 3.1, wp.y * 0.65 - t * 1.45);
-      vec2 uv3 = vec2(wp.x * 0.08 - 1.7, wp.y * 0.15 - t * 0.75);
-      float n1 = n_fbm3(vec3(uv1.x, uv1.y, wp.z * 0.2), 4);
-      float n2 = n_snoise3(vec3(uv2.x, uv2.y, wp.z * 0.35));
-      float n3 = n_snoise3(vec3(uv3.x, uv3.y, wp.z * 0.1));
-      float foam = smoothstep(0.20, 0.70, n1 * 0.55 + n2 * 0.3 + n3 * 0.25 + 0.18);
+      float t = uTime * 4.2;
+      
+      // Multi-speed downward velocity field:
+      float uvY1 = wp.y * 0.38 - t * 1.25;
+      float uvY2 = wp.y * 0.20 - t * 0.75;
+      float uvY3 = wp.y * 0.65 - t * 1.85;
+      
+      // Turbulent downward flow FBM noise
+      float n1 = n_fbm3(vec3(wp.x * 0.16, uvY1, wp.z * 0.25), 4);
+      float n2 = n_snoise3(vec3(wp.x * 0.35 + 2.4, uvY2, wp.z * 0.4));
+      float n3 = n_snoise3(vec3(wp.x * 0.8 - 1.8, uvY3, wp.z * 0.15));
+      
+      // Cellular Voronoi aerated foam bubbles
+      vec2 wor = n_worley(vec2(wp.x * 0.45, uvY1 * 0.8));
+      float bubble = 1.0 - wor.x;
+      
+      float foam = smoothstep(0.18, 0.68, n1 * 0.5 + n2 * 0.3 + n3 * 0.2 + bubble * 0.25 + 0.15);
       g_foam = foam;
+      g_core = n1;
       
-      // Radiant aerated whitewater with emerald-turquoise glacial tint
-      vec3 deepWater = vec3(0.08, 0.35, 0.38);
-      vec3 whitewater = vec3(0.97, 0.99, 1.0);
+      // Deep glacial water showing through thin aerated water sheets
+      vec3 deepWater = vec3(0.06, 0.34, 0.38);
+      vec3 whitewater = vec3(0.98, 0.99, 1.0);
       diffuseColor.rgb = mix(deepWater, whitewater, foam);
-      // Aeration light bounce
-      diffuseColor.rgb += vec3(0.35, 0.36, 0.38) * foam;
+      // Aeration light bounce: multiple internal scatterings in foam froth
+      diffuseColor.rgb += vec3(0.38, 0.40, 0.42) * foam;
     }
   `,
-  fragRough: /* glsl */ `roughnessFactor = mix(0.08, 0.55, g_foam);`,
-  fragNormal: /* glsl */ `normal = n_bumpView(-vViewPosition, normal, g_foam, 0.045);`,
+  fragRough: /* glsl */ `
+    roughnessFactor = mix(0.06, 0.52, g_foam);
+  `,
+  fragNormal: /* glsl */ `
+    normal = n_bumpView(-vViewPosition, normal, g_foam * 0.8 + g_core * 0.4, 0.05);
+  `,
 });
 
-// River flowing surface with gentle caustics, ripples, and whitewater rapids foam
-PROC.riverWaterSurface = () => ({
-  fragHead: /* glsl */ `float g_wave; float g_rf;`,
+// 5. Procedural Plunge Pool Boiling Foam Disks (Radial expanding froth)
+PROC.plungePoolFoam = () => ({
+  fragHead: /* glsl */ `float g_froth;`,
   fragColor: /* glsl */ `
     {
       vec3 wp = vWPos;
-      float t = uTime * 0.95;
-      float w1 = sin(wp.x * 0.8 + wp.z * 0.5 - t * 2.2);
-      float w2 = cos(wp.x * 0.4 - wp.z * 1.1 - t * 1.6);
-      float rip = n_snoise3(vec3(wp.x * 0.9, t * 1.4, wp.z * 0.9)) * 0.5 + 0.5;
-      g_wave = (w1 + w2) * 0.25 + rip * 0.5;
+      vec2 center = vec2(-50.0, -265.0);
+      float r = length(wp.xz - center);
+      float t = uTime * 2.2;
       
-      // Whitewater rapids foam riffles along fast-moving channel
-      float foamNoise = n_fbm3(vec3(wp.x * 0.35, wp.y * 0.1, wp.z * 0.35 - t * 1.8), 3);
-      float rf = smoothstep(0.48, 0.78, foamNoise);
-      g_rf = rf;
+      // Expanding radial shockwaves and churning eddies
+      float radialWave = sin(r * 0.35 - t * 2.0);
+      float swirl = n_snoise3(vec3(wp.x * 0.18, t * 1.2, wp.z * 0.18));
+      float frothNoise = n_fbm3(vec3(wp.x * 0.32, t * 0.8, wp.z * 0.32), 3);
       
-      // Clear tropical river water: crystalline turquoise-aquamarine with sparkling whitewater foam
-      vec3 deepWater = vec3(0.04, 0.36, 0.40);
-      vec3 shallowWater = vec3(0.10, 0.50, 0.48);
-      vec3 waterBase = mix(deepWater, shallowWater, sin(wp.x * 0.12 + wp.z * 0.12) * 0.5 + 0.5);
-      vec3 foamCol = vec3(0.96, 0.98, 1.0);
-      diffuseColor.rgb = mix(waterBase, foamCol, rf * 0.85);
-      diffuseColor.a = mix(0.82, 0.98, rf);
+      // Intense boil at center (r < 25m), dissipating outwards to perimeter
+      float boilCenter = smoothstep(45.0, 4.0, r);
+      float froth = smoothstep(0.32, 0.72, frothNoise + swirl * 0.3 + boilCenter * 0.65);
+      g_froth = froth;
+      
+      vec3 poolTurquoise = vec3(0.04, 0.35, 0.39);
+      vec3 whitewater = vec3(0.97, 0.99, 1.0);
+      diffuseColor.rgb = mix(poolTurquoise, whitewater, froth);
+      diffuseColor.rgb += vec3(0.35, 0.36, 0.38) * froth;
+      diffuseColor.a = mix(0.45, 0.95, froth);
     }
   `,
-  fragRough: /* glsl */ `roughnessFactor = mix(0.04, 0.55, g_rf);`,
-  fragNormal: /* glsl */ `normal = n_bumpView(-vViewPosition, normal, g_wave + g_rf * 0.8, 0.045);`,
+  fragRough: /* glsl */ `
+    roughnessFactor = mix(0.04, 0.58, g_froth);
+  `,
+  fragNormal: /* glsl */ `
+    normal = n_bumpView(-vViewPosition, normal, g_froth, 0.04);
+  `,
 });
 
-// Submerged gravel, riverbed silt and wet stones
-PROC.wetRiverbed = () => ({
+// 6. Physically Based River Water with Fresnel, Flow Velocity & Depth Extinction
+PROC.riverWaterPhys = () => ({
+  fragHead: /* glsl */ `float g_wave; float g_foam;`,
   fragColor: /* glsl */ `
     {
       vec3 wp = vWPos;
-      float pebbles = n_snoise3(wp * 18.0) * 0.5 + 0.5;
-      float sand = n_fbm3(wp * 2.5, 3);
-      vec3 col = vec3(0.12, 0.14, 0.11) * (0.8 + 0.35 * sand + 0.25 * pebbles);
+      float t = uTime * 1.1;
+      
+      // Directional river current (flows southward along +Z)
+      float flowZ = wp.z - t * 2.8;
+      // Multi-scale overlapping wave spectrum
+      float swell = sin(wp.x * 0.45 + flowZ * 0.3);
+      float chop1 = cos(wp.x * 1.1 - flowZ * 0.85);
+      float chop2 = sin(wp.x * 2.2 + flowZ * 1.6);
+      float ripple = n_snoise3(vec3(wp.x * 1.8, t * 2.2, wp.z * 1.8)) * 0.5 + 0.5;
+      g_wave = (swell * 0.4 + chop1 * 0.3 + chop2 * 0.2 + ripple * 0.4) * 0.4;
+      
+      // Rapids foam along fast channel and near obstacles
+      float rapidNoise = n_fbm3(vec3(wp.x * 0.32, wp.y * 0.1, flowZ * 0.4), 3);
+      float rf = smoothstep(0.52, 0.82, rapidNoise);
+      g_foam = rf;
+      
+      // Clear tropical water: shallow turquoise-emerald to deep ink-teal
+      vec3 shallowTurquoise = vec3(0.10, 0.48, 0.45);
+      vec3 deepTeal = vec3(0.03, 0.26, 0.30);
+      vec3 waterCol = mix(deepTeal, shallowTurquoise, sin(wp.x * 0.08 + wp.z * 0.05) * 0.5 + 0.5);
+      vec3 foamCol = vec3(0.97, 0.99, 1.0);
+      
+      diffuseColor.rgb = mix(waterCol, foamCol, rf * 0.88);
+      // Realistic water transmission: opaque in foam, translucent in clear current
+      diffuseColor.a = mix(0.85, 0.99, rf);
+    }
+  `,
+  fragRough: /* glsl */ `
+    roughnessFactor = mix(0.035, 0.55, g_foam);
+  `,
+  fragNormal: /* glsl */ `
+    normal = n_bumpView(-vViewPosition, normal, g_wave + g_foam * 0.7, 0.038);
+  `,
+});
+
+// 7. Damp Forest Soil & Liquid Mud
+PROC.soilAndMudDetailed = (isMud = false) => ({
+  fragHead: /* glsl */ `float g_h; float g_puddle;`,
+  fragColor: /* glsl */ `
+    {
+      vec3 wp = vWPos;
+      float humus = n_fbm3(wp * 2.5, 4);
+      float crumb = n_snoise3(wp * 28.0) * 0.08;
+      float litter = smoothstep(0.68, 0.88, n_snoise3(wp * 12.0 + 3.2) * 0.5 + 0.5);
+      
+      vec3 soilBase = vec3(0.13, 0.09, 0.06) * (0.85 + 0.35 * humus + crumb);
+      soilBase = mix(soilBase, vec3(0.18, 0.12, 0.08), litter * 0.5);
+      
+      ${isMud ? `
+        // Liquid mud puddle depressions
+        float puddles = smoothstep(0.38, 0.72, n_fbm3(wp * 0.75, 3));
+        g_puddle = puddles;
+        vec3 mudCol = vec3(0.08, 0.06, 0.04) * (0.8 + 0.25 * humus);
+        soilBase = mix(soilBase, mudCol, puddles);
+      ` : `
+        g_puddle = 0.0;
+      `}
+      
+      diffuseColor.rgb = soilBase;
+      g_h = humus * 0.4 + crumb * 0.3 - g_puddle * 0.2;
+    }
+  `,
+  fragRough: /* glsl */ `
+    roughnessFactor = mix(0.88, 0.16, g_puddle);
+  `,
+  fragNormal: /* glsl */ `
+    normal = n_bumpView(-vViewPosition, normal, g_h, 0.025);
+  `,
+});
+
+// 8. Riverbed Submerged Gravel, Silt and Stones with Caustic Light
+PROC.riverbedStonesDetailed = () => ({
+  fragHead: /* glsl */ `float g_h;`,
+  fragColor: /* glsl */ `
+    {
+      vec3 wp = vWPos;
+      float t = uTime * 1.5;
+      float pebbles = n_snoise3(wp * 16.0) * 0.5 + 0.5;
+      float largeStones = n_fbm3(wp * 2.2, 3);
+      
+      // Mixed mineral colors: basalt slate, ochre pebble, granite fleck
+      vec3 slate = vec3(0.10, 0.11, 0.12);
+      vec3 ochre = vec3(0.18, 0.14, 0.09);
+      vec3 granite = vec3(0.22, 0.21, 0.19);
+      vec3 col = mix(slate, ochre, pebbles);
+      col = mix(col, granite, largeStones * 0.4);
+      
+      // Dynamic sunlight caustics filtering through river surface
+      float c1 = sin(wp.x * 2.8 + wp.z * 1.6 - t * 1.8);
+      float c2 = cos(wp.x * 1.9 - wp.z * 2.5 + t * 2.1);
+      float caustics = pow(max(0.0, (c1 + c2) * 0.5 + 0.3), 3.0) * 0.45;
+      col += vec3(0.35, 0.50, 0.45) * caustics;
+      
       diffuseColor.rgb = col;
+      g_h = pebbles * 0.5 + largeStones * 0.3;
     }
   `,
-  fragRough: /* glsl */ `roughnessFactor = 0.5;`,
+  fragRough: /* glsl */ `
+    roughnessFactor = 0.48;
+  `,
+  fragNormal: /* glsl */ `
+    normal = n_bumpView(-vViewPosition, normal, g_h, 0.02);
+  `,
 });
+
+// Backwards-compatible aliases
+PROC.rainforestRock = PROC.rockDetailed;
+PROC.cliffRock = () => PROC.rockDetailed('basalt', '0.0', '0.5');
+PROC.rainforestBark = () => PROC.treeBarkDetailed('dry');
+PROC.tropicalLeaf = PROC.tropicalLeafPhys;
+PROC.waterfallFoam = PROC.waterfallFoamDetailed;
+PROC.riverWaterSurface = PROC.riverWaterPhys;
+PROC.wetRiverbed = PROC.riverbedStonesDetailed;
 
 // ---------------------------------------------------------------------------
 // The shared material library. Use these instances (they are shared so the
@@ -558,34 +738,71 @@ export function materials() {
   M.lanternGlowSoft = glow([1.0, 0.62, 0.30], 4);
   M.flame = glow([1.0, 0.62, 0.25], 40);
 
-  // New Rainforest Master Materials
-  M.rock = std({ color: 0xffffff, roughness: 0.85, metalness: 0.04 }, PROC.rainforestRock('0.5', '0.0'));
-  M.rockMossy = std({ color: 0xffffff, roughness: 0.9, metalness: 0.02 }, PROC.rainforestRock('1.0', '0.0'));
-  M.rockWet = std({ color: 0xffffff, roughness: 0.14, metalness: 0.08 }, PROC.rainforestRock('0.3', '1.0'));
-  M.cliff = std({ color: 0xffffff, roughness: 0.85, metalness: 0.02 }, PROC.cliffRock());
-  M.rainforestBark = std({ color: 0xffffff, roughness: 0.88, metalness: 0 }, PROC.rainforestBark());
-  M.tropicalLeaf = phys({
-    color: 0xffffff, roughness: 0.28, metalness: 0, clearcoat: 0.45, clearcoatRoughness: 0.3,
+  // --- Phase 2 Rainforest Materials Library ---------------------------------
+  // Bark Family
+  M.barkDry = std({ color: 0xffffff, roughness: 0.88, metalness: 0 }, PROC.treeBarkDetailed('dry'));
+  M.barkWet = std({ color: 0xffffff, roughness: 0.25, metalness: 0.02 }, PROC.treeBarkDetailed('wet'));
+  M.barkMossy = std({ color: 0xffffff, roughness: 0.95, metalness: 0 }, PROC.treeBarkDetailed('mossy'));
+  M.barkRoot = std({ color: 0xffffff, roughness: 0.75, metalness: 0 }, PROC.treeBarkDetailed('root'));
+  M.rainforestBark = M.barkDry;
+
+  // Rock & Cliff Family
+  M.rock = std({ color: 0xffffff, roughness: 0.84, metalness: 0.02 }, PROC.rockDetailed('basalt', '0.0', '0.5'));
+  M.rockMossy = std({ color: 0xffffff, roughness: 0.92, metalness: 0.01 }, PROC.rockDetailed('basalt', '0.0', '0.95'));
+  M.rockWet = std({ color: 0xffffff, roughness: 0.14, metalness: 0.06 }, PROC.rockDetailed('basalt', '1.0', '0.3'));
+  M.cliffDark = std({ color: 0xffffff, roughness: 0.82, metalness: 0.02 }, PROC.rockDetailed('basalt', '0.2', '0.4'));
+  M.cliffSplash = std({ color: 0xffffff, roughness: 0.12, metalness: 0.08 }, PROC.rockDetailed('basalt', '1.0', '0.25'));
+  M.cliffSedimentary = std({ color: 0xffffff, roughness: 0.85, metalness: 0.02 }, PROC.rockDetailed('sedimentary', '0.0', '0.35'));
+  M.graniteDry = std({ color: 0xffffff, roughness: 0.78, metalness: 0.02 }, PROC.rockDetailed('granite', '0.0', '0.4'));
+  M.graniteWet = std({ color: 0xffffff, roughness: 0.16, metalness: 0.06 }, PROC.rockDetailed('granite', '1.0', '0.3'));
+  M.cliff = M.cliffDark;
+
+  // Soil & Ground Family
+  M.soilDamp = std({ color: 0xffffff, roughness: 0.88, metalness: 0 }, PROC.soilAndMudDetailed(false));
+  M.soilMud = std({ color: 0xffffff, roughness: 0.22, metalness: 0.04 }, PROC.soilAndMudDetailed(true));
+  M.riverbedGravel = std({ color: 0xffffff, roughness: 0.48, metalness: 0 }, PROC.riverbedStonesDetailed());
+  M.riverbed = M.riverbedGravel;
+
+  // Tropical Foliage Family
+  M.leafBroad = phys({
+    color: 0xffffff, roughness: 0.26, metalness: 0, clearcoat: 0.55, clearcoatRoughness: 0.25,
     side: THREE.DoubleSide,
-  }, PROC.tropicalLeaf('0.7'));
-  M.palmFrond = phys({
-    color: 0xffffff, roughness: 0.32, metalness: 0, clearcoat: 0.35, clearcoatRoughness: 0.35,
+  }, PROC.tropicalLeafPhys('broadleaf', '0.85'));
+  M.leafPalm = phys({
+    color: 0xffffff, roughness: 0.32, metalness: 0, clearcoat: 0.45, clearcoatRoughness: 0.32,
     side: THREE.DoubleSide,
-  }, PROC.tropicalLeaf('0.55'));
-  M.fern = phys({
-    color: 0xffffff, roughness: 0.35, metalness: 0, clearcoat: 0.2, clearcoatRoughness: 0.4,
+  }, PROC.tropicalLeafPhys('palm', '0.65'));
+  M.leafFern = phys({
+    color: 0xffffff, roughness: 0.35, metalness: 0, clearcoat: 0.28, clearcoatRoughness: 0.38,
     side: THREE.DoubleSide,
-  }, PROC.tropicalLeaf('0.85'));
+  }, PROC.tropicalLeafPhys('fern', '0.90'));
+  M.leafMonstera = phys({
+    color: 0xffffff, roughness: 0.24, metalness: 0, clearcoat: 0.65, clearcoatRoughness: 0.22,
+    side: THREE.DoubleSide,
+  }, PROC.tropicalLeafPhys('broadleaf', '0.80'));
+  M.tropicalLeaf = M.leafBroad;
+  M.palmFrond = M.leafPalm;
+  M.fern = M.leafFern;
+
+  // Water & Waterfall Family
   M.waterfall = std({
-    color: 0xffffff, roughness: 0.22, metalness: 0.05,
+    color: 0xffffff, roughness: 0.18, metalness: 0.05,
     side: THREE.DoubleSide,
-  }, PROC.waterfallFoam());
+  }, PROC.waterfallFoamDetailed());
+  M.whitewaterFoam = std({
+    color: 0xffffff, roughness: 0.45, metalness: 0.02,
+    side: THREE.DoubleSide,
+  }, PROC.waterfallFoamDetailed());
+  M.plungeFoam = phys({
+    color: 0xffffff, roughness: 0.12, metalness: 0.05, clearcoat: 0.8, clearcoatRoughness: 0.1,
+    transparent: true, opacity: 0.92,
+    side: THREE.DoubleSide,
+  }, PROC.plungePoolFoam());
   M.riverWater = phys({
-    color: 0xffffff, roughness: 0.05, metalness: 0.05, clearcoat: 1.0, clearcoatRoughness: 0.08,
-    transparent: true, opacity: 0.88,
+    color: 0xffffff, roughness: 0.035, metalness: 0.05, clearcoat: 1.0, clearcoatRoughness: 0.06,
+    transparent: true, opacity: 0.90,
     side: THREE.DoubleSide,
-  }, PROC.riverWaterSurface());
-  M.riverbed = std({ color: 0xffffff, roughness: 0.65, metalness: 0 }, PROC.wetRiverbed());
+  }, PROC.riverWaterPhys());
 
   _lib = M;
   return M;
